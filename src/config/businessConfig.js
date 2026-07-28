@@ -1,5 +1,5 @@
 export const businessConfig = {
-  brandName: 'OUD KRAFT ABU DHABI',
+  brandName: 'OUD KRAFT',
   phone: '+971 50 123 4567',
   whatsapp: '+971501234567',
   email: 'hello@oudkraft.ae',

@@ -5,6 +5,7 @@ import { Menu, Search, Heart, ShoppingBag, UserRound, ChevronRight, MessageCircl
 import { businessConfig } from '../config/businessConfig';
 import { getCart } from '../services/cart';
 import { getProducts } from '../services/products';
+import oudKraftLogo from '../assets/logo/oud-kraft-logo.png';
 
 const navItems = [
   { to: '/', label: 'Home' },
@@ -37,10 +38,10 @@ export const Layout = ({ children }) => {
       <header className="sticky top-0 z-40 border-b border-[#e9dcc1] bg-[#f8f3ea]/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link to="/" className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#C6A15B] bg-[#0D3B2E] text-sm font-semibold text-[#F8F4EC]">OK</div>
+            <img src={oudKraftLogo} alt="Oud Kraft" className="h-11 w-11 object-contain" />
             <div>
               <p className="font-serif text-xl text-[#0D3B2E]">{businessConfig.brandName}</p>
-              <p className="text-xs uppercase tracking-[0.3em] text-[#6b6b6b]">Private perfume concierge</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-[#6b6b6b]">ABU DHABI</p>
             </div>
           </Link>
           <nav className="hidden items-center gap-6 lg:flex">
@@ -90,7 +91,9 @@ export const Layout = ({ children }) => {
       <footer className="border-t border-[#e3d9c4] bg-[#0D3B2E] px-4 py-10 text-white sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-8 md:grid-cols-4">
           <div>
-            <p className="font-serif text-2xl">OUD KRAFT ABU DHABI</p>
+            <img src={oudKraftLogo} alt="Oud Kraft" className="h-16 w-16 object-contain" />
+            <p className="mt-3 font-serif text-2xl">OUD KRAFT</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-[#ebdfcb]">ABU DHABI</p>
             <p className="mt-3 text-sm leading-7 text-[#ebdfcb]">Premium fragrances and gifting for modern connoisseurs across Abu Dhabi and the UAE.</p>
           </div>
           <div>
