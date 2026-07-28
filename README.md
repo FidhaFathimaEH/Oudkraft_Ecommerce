@@ -1,77 +1,71 @@
-# � Oud Kraft E-commerce
+# Oud Kraft E-commerce
 
-<img width="15%" align="right" style="margin:5%" alt="logo" src="https://res.cloudinary.com/silviajcn/image/upload/v1683168997/PRACTICAS/Varios/shopping_h7sjdf.png" />
+A premium perfume e-commerce web application built with React, Vite, and Tailwind CSS for **Oud Kraft**, designed to provide a luxury online shopping experience.
 
-Oud Kraft is a premium perfume boutique frontend crafted for a refined Abu Dhabi customer experience. Explore luxury scents, curated gifting sets, and a polished shopping flow for fragrance lovers.
+## Features
 
-## 📃 In the application you can:
+- Premium perfume catalog
+- Product search and filtering
+- Shopping cart
+- Wishlist
+- Secure checkout flow
+- Gift customization
+- Order tracking
+- Responsive design
+- Luxury UI/UX
 
-- Discover premium Oud Kraft perfume collections.
-- Filter fragrances by name, category, gender and aroma family.
-- Add perfumes to your cart and manage them before checkout.
-- Place orders and review your purchase history.
-
-## ⚙️ Changes made:
-
-In this project I wanted to make some changes to practice some logic issues and to add some improvements to the final project of the [Curso de React.js con Vite.js y TailwindCSS](https://platzi.com/cursos/react-vite-tailwindcss/) taught by the teacher [Estefany Aguilar](https://platzi.com/profes/teffcode/). These are the changes I made:
-- Allow the user to navigate and perform actions on the page and that this information persists in case the page is closed. I did this by sending the information to Local Storage.
-- Remove all products from the cart.
-- Routes for the shopping cart and for the detail of the selected product.
-- I used a JSON file containing the products, instead of the Platzi API. This allowed me to see a more complete detail of each product with more information.
-
-## 🖱️ Visit the app here:
-
-https://shopi-app.netlify.app/
-
-## 📁 Project:
+## Tech Stack
 
 - React
 - Vite
-- Tailwind
+- Tailwind CSS
+- React Router
+- JavaScript
 
-## 📌 Dependencies
+## Project Structure
 
-* ```react```
-* ```react-dom```
-* ```react-router-dom```
-* ```tailwindcss```
-* ```prop-types```
-* ```@heroicons/react```
+```
+src/
+├── assets/
+├── components/
+├── pages/
+├── services/
+├── utils/
+└── App.jsx
+```
 
-## 💼 Prerequisites
+## Installation
 
-* Node.js
-* npm
+Clone the repository:
 
-## ⚙️ Installation
+```bash
+git clone https://github.com/FidhaFathimaEH/Oudkraft_Ecommerce.git
+```
 
-* Clone the latest code on the master branch
-    * ```git clone https://github.com/silviajcn/Ecommerce-tailwind.git```
-* Install dependencies
-    * ```npm install```
-* Run the web server!
-    * ```npm run dev```
+Install dependencies:
 
-## 🎈 Usage
+```bash
+npm install
+```
 
-* Navigate to http://localhost:5173 on your browser
+Run the development server:
 
-## 😍 Screenshots of the app
+```bash
+npm run dev
+```
 
-### Desktop:
+Build for production:
 
-![Shopi Desktop 1](https://res.cloudinary.com/silviajcn/image/upload/v1683673562/PRACTICAS/Varios/Screenshot_2023-05-09_180545_bejdwm.png)
+```bash
+npm run build
+```
 
-![Shopi Desktop 2](https://res.cloudinary.com/silviajcn/image/upload/v1683673611/PRACTICAS/Varios/Screenshot_2023-05-09_180641_rvg3yn.png)
+## Author
 
-![Shopi Desktop 3](https://res.cloudinary.com/silviajcn/image/upload/v1683673730/PRACTICAS/Varios/Screenshot_2023-05-09_180841_kbjdcx.png)
+**Fidha Fathima EH**
 
-![Shopi Desktop 4](https://res.cloudinary.com/silviajcn/image/upload/v1683673776/PRACTICAS/Varios/Screenshot_2023-05-09_180901_mzmrtd.png)
+GitHub: https://github.com/FidhaFathimaEH
 
+## License
 
-## 😎 Author
-
-* **Silvia C. Navarro**  - [@silviajcn](https://github.com/silviajcn)
-* **My portfolio** - [My portfolio](https://silviajcn.vercel.app/)
-
-    [![Twitter Badge](https://img.shields.io/badge/-@lectoramigrante-1ca0f1?style=flat&labelColor=1ca0f1&logo=twitter&logoColor=white&link=https://twitter.com/lectoramigrante)](https://twitter.com/lectoramigrante)
+Private – All Rights Reserved
