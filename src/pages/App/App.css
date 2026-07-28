@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    background: #f8f3ea;
+    color: #171311;
+}
+
+.fondo {
+    background: linear-gradient(135deg, #f7efe4 0%, #efe2cb 100%);
+}
+
+.fondo2 {
+    background: linear-gradient(135deg, #fffaf4 0%, #f4ebdc 100%);
+}
+
+.luxury-card {
+    @apply rounded-[28px] border border-[#e7d7b9] bg-white/80 shadow-[0_20px_60px_-30px_rgba(13,59,46,0.35)] backdrop-blur;
+}
+
+.luxury-panel {
+    @apply rounded-[32px] border border-[#e7d7b9] bg-gradient-to-br from-[#123F34] to-[#0D3B2E] text-white shadow-[0_30px_80px_-30px_rgba(13,59,46,0.75)];
+}
