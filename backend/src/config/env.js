@@ -9,19 +9,17 @@ module.exports = {
   jwtSecret: process.env.JWT_SECRET || 'dev-secret',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret',
-  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
-  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  clientUrl: process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:5173',
   cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME,
     apiKey: process.env.CLOUDINARY_API_KEY,
     apiSecret: process.env.CLOUDINARY_API_SECRET,
   },
   smtp: {
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT || 587,
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-    from: process.env.SMTP_FROM,
+    host: process.env.EMAIL_HOST,
+    port: Number(process.env.EMAIL_PORT || 587),
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
   stripe: {
     secretKey: process.env.STRIPE_SECRET_KEY,
@@ -29,5 +27,4 @@ module.exports = {
   },
   rateLimitWindowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 900000),
   rateLimitMaxRequests: Number(process.env.RATE_LIMIT_MAX_REQUESTS || 100),
-  uploadLimitMb: Number(process.env.UPLOAD_LIMIT_MB || 5),
 };
