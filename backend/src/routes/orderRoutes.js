@@ -1,3 +1,18 @@
 const router = require('express').Router();
-// TODO: Add order endpoints in Sprint 2.
+
+const {
+  createOrder,
+  getOrders,
+  getOrderById,
+  updateOrderStatus,
+} = require('../controllers/OrderController');
+
+router.post('/', createOrder);
+
+router.get('/', getOrders);
+
+router.get('/:id', getOrderById);
+
+router.patch('/:id/status', updateOrderStatus);
+
 module.exports = router;
