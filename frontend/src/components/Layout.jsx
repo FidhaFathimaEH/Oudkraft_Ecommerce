@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Menu, Search, Heart, ShoppingBag, UserRound, ChevronRight, MessageCircle, Sparkles, ArrowRight } from 'lucide-react';
 import { businessConfig } from '../config/businessConfig';
 import { getCart } from '../services/cart';
@@ -25,7 +25,8 @@ export const Layout = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [wishlistCount, setWishlistCount] = useState(getWishlist().length);
-  const cartCount = useMemo(() => getCart().reduce((sum, item) => sum + item.quantity, 0), [location.pathname]);
+  const [cartCount, setCartCount] = useState(() =>
+  getCart().reduce((sum, item) => sum + item.quantity, 0));
   const products = getProducts();
 
   useEffect(() => {
@@ -37,6 +38,23 @@ export const Layout = ({ children }) => {
     window.addEventListener('wishlist-changed', updateWishlistCount);
     return () => window.removeEventListener('wishlist-changed', updateWishlistCount);
   }, []);
+  useEffect(() => {
+  const updateCartCount = () => {
+    const cart = getCart();
+    const count = cart.reduce(
+      (sum, item) => sum + item.quantity,
+      0
+    );
+
+    setCartCount(count);
+  };
+
+  window.addEventListener('cart-changed', updateCartCount);
+
+  return () => {
+    window.removeEventListener('cart-changed', updateCartCount);
+  };
+}, []);
   const searchResults = query.trim()
     ? products.filter((product) => `${product.name} ${product.category} ${product.fragranceFamily} ${product.topNotes.join(' ')} ${product.middleNotes.join(' ')}`.toLowerCase().includes(query.toLowerCase()))
     : [];

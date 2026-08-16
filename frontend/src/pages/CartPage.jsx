@@ -45,7 +45,10 @@ export const CartPage = () => {
   const updateQuantity = (product, delta) => {
     const nextCart = cartItems
       .map((item) => {
-        if (item.id === product.id && item.size === product.size) {
+        if (
+  (item._id || item.id) === (product._id || product.id) &&
+  item.size === product.size
+) {
           return {
             ...item,
             quantity: Math.max(0, Number(item.quantity || 0) + delta),
@@ -62,8 +65,12 @@ export const CartPage = () => {
 
   const removeItem = (product) => {
     const nextCart = cartItems.filter(
-      (item) => !(item.id === product.id && item.size === product.size)
-    );
+  (item) =>
+    !(
+      (item._id || item.id) === (product._id || product.id) &&
+      item.size === product.size
+    )
+);
 
     setCartItems(nextCart);
     saveCart(nextCart);
@@ -110,7 +117,7 @@ export const CartPage = () => {
             <div className="space-y-4">
               {cartItems.map((item) => (
                 <div
-                  key={`${item.id}-${item.size}`}
+                  key={`${item._id || item.id}-${item.size}`}
                   className="flex flex-col gap-4 rounded-[24px] border border-[#e3d9c4] bg-white p-4 shadow-sm transition hover:shadow-md sm:flex-row sm:items-center"
                 >
                   <Link

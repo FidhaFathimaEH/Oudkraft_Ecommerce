@@ -10,8 +10,17 @@ export const getCart = () => {
 
 export const saveCart = (cart) => {
   if (typeof window === 'undefined') return cart;
-  window.localStorage.setItem('oudkraft-cart', JSON.stringify(cart));
-  return cart;
+
+  const nextCart = Array.isArray(cart) ? cart : [];
+
+  window.localStorage.setItem(
+    'oudkraft-cart',
+    JSON.stringify(nextCart)
+  );
+
+  window.dispatchEvent(new Event('cart-changed'));
+
+  return nextCart;
 };
 
 export const updateCartItem = (cart, product, quantity) => {

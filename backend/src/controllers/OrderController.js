@@ -1,4 +1,5 @@
 const Order = require('../models/Order');
+const Product = require('../models/Product');
 
 const generateOrderNumber = () => {
   const timestamp = Date.now().toString().slice(-8);
@@ -13,10 +14,8 @@ const createOrder = async (req, res, next) => {
       customer,
       deliveryAddress,
       items,
-      subtotal,
-      deliveryFee,
+      deliveryFee = 0,
       discount = 0,
-      total,
       paymentMethod,
     } = req.body;
 
@@ -48,31 +47,86 @@ const createOrder = async (req, res, next) => {
       });
     }
 
-    const orderItems = items.map((item) => ({
-      product: item.product || item._id || item.id,
-      name: item.name,
-      slug: item.slug || '',
-      image: item.image || item.images?.[0] || '',
-      size: item.size || '100 ml',
-      quantity: Number(item.quantity),
-      price: Number(item.price),
-      subtotal: Number(item.price) * Number(item.quantity),
-    }));
-
-    const invalidItem = orderItems.find(
-      (item) =>
-        !item.product ||
-        !item.name ||
-        !Number.isFinite(item.quantity) ||
-        item.quantity < 1 ||
-        !Number.isFinite(item.price) ||
-        item.price < 0
-    );
-
-    if (invalidItem) {
+    if (!['card', 'cash_on_delivery'].includes(paymentMethod)) {
       return res.status(400).json({
         success: false,
-        message: 'One or more order items are invalid.',
+        message: 'Invalid payment method.',
+      });
+    }
+
+    const productIds = items.map(
+      (item) => item.product || item._id || item.id
+    );
+
+    const hasInvalidProductId = productIds.some(
+      (id) => !id
+    );
+
+    if (hasInvalidProductId) {
+      return res.status(400).json({
+        success: false,
+        message: 'One or more product IDs are missing.',
+      });
+    }
+
+    const products = await Product.find({
+      _id: { $in: productIds },
+    });
+
+    if (products.length !== productIds.length) {
+      return res.status(400).json({
+        success: false,
+        message: 'One or more products could not be found.',
+      });
+    }
+
+    const orderItems = [];
+
+    for (const item of items) {
+      const productId = item.product || item._id || item.id;
+
+      const product = products.find(
+        (databaseProduct) =>
+          databaseProduct._id.toString() === productId.toString()
+      );
+
+      if (!product) {
+        return res.status(400).json({
+          success: false,
+          message: `Product not found: ${productId}`,
+        });
+      }
+
+      const quantity = Number(item.quantity);
+
+      if (!Number.isInteger(quantity) || quantity < 1) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid quantity for ${product.name}.`,
+        });
+      }
+
+      const price = Number(product.price);
+
+      if (!Number.isFinite(price) || price < 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid price configured for ${product.name}.`,
+        });
+      }
+
+      orderItems.push({
+        product: product._id,
+        name: product.name,
+        slug: product.slug || '',
+        image:
+          product.images?.[0] ||
+          product.image ||
+          '',
+        size: item.size || '100 ml',
+        quantity,
+        price,
+        subtotal: price * quantity,
       });
     }
 
@@ -81,11 +135,36 @@ const createOrder = async (req, res, next) => {
       0
     );
 
-    const calculatedDeliveryFee = Number(deliveryFee) || 0;
-    const calculatedDiscount = Number(discount) || 0;
+    const calculatedDeliveryFee = Number(deliveryFee);
 
-    const calculatedTotal =
-      calculatedSubtotal + calculatedDeliveryFee - calculatedDiscount;
+    if (
+      !Number.isFinite(calculatedDeliveryFee) ||
+      calculatedDeliveryFee < 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid delivery fee.',
+      });
+    }
+
+    const calculatedDiscount = Number(discount);
+
+    if (
+      !Number.isFinite(calculatedDiscount) ||
+      calculatedDiscount < 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid discount.',
+      });
+    }
+
+    const calculatedTotal = Math.max(
+      0,
+      calculatedSubtotal +
+        calculatedDeliveryFee -
+        calculatedDiscount
+    );
 
     const order = await Order.create({
       orderNumber: generateOrderNumber(),
@@ -111,7 +190,7 @@ const createOrder = async (req, res, next) => {
       subtotal: calculatedSubtotal,
       deliveryFee: calculatedDeliveryFee,
       discount: calculatedDiscount,
-      total: Math.max(0, calculatedTotal),
+      total: calculatedTotal,
 
       paymentMethod,
       paymentStatus: 'pending',

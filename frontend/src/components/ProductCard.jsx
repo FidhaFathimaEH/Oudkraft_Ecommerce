@@ -4,22 +4,36 @@ import { Heart, ShoppingBag, Star } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getCart, saveCart, updateCartItem } from '../services/cart';
 import { isWishlisted, toggleWishlistItem } from '../services/wishlist';
+export const ProductCard = ({
+  product,
+  onQuickView,
+  onAddToCart: onAddToCartProp,
+}) => {
+  const productId = product._id || product.id;
 
-export const ProductCard = ({ product, onQuickView, onAddToCart: onAddToCartProp }) => {
-  const [saved, setSaved] = useState(isWishlisted(product.id));
+  const [saved, setSaved] = useState(isWishlisted(productId));
   const [cartMessage, setCartMessage] = useState('');
 
   useEffect(() => {
-    const updateWishState = () => setSaved(isWishlisted(product.id));
+    const updateWishState = () => {
+      setSaved(isWishlisted(productId));
+    };
+
     window.addEventListener('wishlist-changed', updateWishState);
     updateWishState();
-    return () => window.removeEventListener('wishlist-changed', updateWishState);
-  }, [product.id]);
+
+    return () => {
+      window.removeEventListener(
+        'wishlist-changed',
+        updateWishState
+      );
+    };
+  }, [productId]);
 
   const toggleWishlist = () => {
-    toggleWishlistItem(product.id);
-    setSaved((current) => !current);
-  };
+  const nextWishlist = toggleWishlistItem(productId);
+  setSaved(nextWishlist.includes(productId));
+};
 
   const addToCart = () => {
     if (onAddToCartProp) {
@@ -46,7 +60,11 @@ export const ProductCard = ({ product, onQuickView, onAddToCart: onAddToCartProp
         <div className="absolute left-4 top-4 rounded-full bg-[#0D3B2E] px-3 py-1 text-xs uppercase tracking-[0.3em] text-white">{product.bestseller ? 'Best Seller' : 'New'}</div>
         {product.discount ? <div className="absolute left-4 top-14 rounded-full bg-[#C6A15B] px-3 py-1 text-xs uppercase tracking-[0.3em] text-white">{product.discount} off</div> : null}
         <motion.button whileTap={{ scale: 0.94 }} onClick={toggleWishlist} className="absolute right-4 top-4 rounded-full border border-[#e8dfcf] bg-white/90 p-2 text-[#0D3B2E]" aria-label="Toggle wishlist">
-          <Heart size={16} fill={saved ? '#C6A15B' : 'none'} />
+          <Heart
+            size={16}
+            fill={saved ? '#C6A15B' : 'none'}
+            color={saved ? '#C6A15B' : '#0D3B2E'}
+          />
         </motion.button>
       </div>
       <div className="p-6">
