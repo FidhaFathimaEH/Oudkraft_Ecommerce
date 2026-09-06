@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:5000/api/v1';
+const API_BASE_URL = '/api/v1';
 
 const request = async (endpoint, options = {}) => {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -34,4 +34,28 @@ export const getProducts = async (params = {}) => {
 
 export const getProductBySlug = async (slug) => {
   return request(`/products/${slug}`);
+};
+
+export const getProductReviews = async (productId) => {
+  return request(`/reviews/product/${productId}`);
+};
+
+export const createReview = async (reviewData) => {
+  return request('/reviews', {
+    method: 'POST',
+    body: JSON.stringify(reviewData),
+  });
+};
+
+export const updateReview = async (reviewId, reviewData) => {
+  return request(`/reviews/${reviewId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(reviewData),
+  });
+};
+
+export const deleteReview = async (reviewId) => {
+  return request(`/reviews/${reviewId}`, {
+    method: 'DELETE',
+  });
 };

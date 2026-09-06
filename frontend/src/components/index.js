@@ -1,6 +1,7 @@
 export * from './Card';
 export * from './CheckoutSideMenu';
 export * from './Footer';
+export * from './Header';
 export * from './Layout';
 export * from './NavBar';
 export * from './OrderCard';

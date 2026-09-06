@@ -1,4 +1,6 @@
 const router = require('express').Router();
+const auth = require('../middleware/auth');
+const admin = require('../middleware/admin');
 
 const {
   createOrder,
@@ -7,12 +9,12 @@ const {
   updateOrderStatus,
 } = require('../controllers/OrderController');
 
+// Public — customers place orders
 router.post('/', createOrder);
 
-router.get('/', getOrders);
+// Admin-only
+router.get('/', auth, admin, getOrders);
+router.get('/:id', auth, admin, getOrderById);
+router.patch('/:id/status', auth, admin, updateOrderStatus);
 
-router.get('/:id', getOrderById);
-
-router.patch('/:id/status', updateOrderStatus);
-
-module.exports = router;
+module.exports = router;

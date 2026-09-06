@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { MessageCircle, Star, ThumbsUp, Flag, ImageIcon, Video, Sparkles } from 'lucide-react';
+import { getProductReviews } from '../services/reviews';
 
 const sortOptions = [
   { value: 'newest', label: 'Newest' },
@@ -13,8 +14,46 @@ const ratingFilters = [5, 4, 3, 2, 1];
 
 export const ReviewsSection = ({ product }) => {
   const [sortBy, setSortBy] = useState('newest');
-  const [ratingFilter, setRatingFilter] = useState('all');
-  const reviews = product.reviews || [];
+const [ratingFilter, setRatingFilter] = useState('all');
+const [reviews, setReviews] = useState([]);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState('');
+
+useEffect(() => {
+  let cancelled = false;
+
+  const loadReviews = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const productId = product._id || product.id;
+
+      const data = await getProductReviews(productId);
+
+      if (!cancelled) {
+        setReviews(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error('Failed to load reviews:', err);
+
+      if (!cancelled) {
+        setError(err.message || 'Failed to load reviews');
+        setReviews([]);
+      }
+    } finally {
+      if (!cancelled) {
+        setLoading(false);
+      }
+    }
+  };
+
+  loadReviews();
+
+  return () => {
+    cancelled = true;
+  };
+}, [product]);
 
   const visibleReviews = useMemo(() => {
     const filtered = ratingFilter === 'all' ? reviews : reviews.filter((review) => review.rating === Number(ratingFilter));
@@ -23,7 +62,7 @@ export const ReviewsSection = ({ product }) => {
       if (sortBy === 'highest') return b.rating - a.rating;
       if (sortBy === 'lowest') return a.rating - b.rating;
       if (sortBy === 'helpful') return (b.helpful || 0) - (a.helpful || 0);
-      return new Date(b.dateValue || b.date) - new Date(a.dateValue || a.date);
+      return new Date(b.createdAt) - new Date(a.createdAt);
     });
   }, [reviews, ratingFilter, sortBy]);
 
@@ -124,7 +163,7 @@ export const ReviewsSection = ({ product }) => {
                     <div className="mt-2 flex items-center gap-2 text-sm text-[#5b5b5b]">
                       <div className="flex items-center gap-1 text-[#C6A15B]"><Star size={14} fill="currentColor" /> {review.rating}</div>
                       <span>•</span>
-                      <span>{review.date}</span>
+                      <span>{new Date(review.createdAt).toLocaleDateString()}</span>
                       <span>•</span>
                       <span>{review.country}</span>
                     </div>
