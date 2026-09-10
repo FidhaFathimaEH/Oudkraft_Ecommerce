@@ -45,6 +45,8 @@ export const deleteProduct = (id) =>
 // Orders
 export const getAdminOrders = () => req('/orders');
 
+export const getAdminOrderById = (id) => req(`/orders/${id}`);
+
 export const updateOrderStatus = (id, status) =>
   req(`/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
 
