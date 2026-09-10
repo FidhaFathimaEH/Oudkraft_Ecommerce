@@ -43,7 +43,6 @@ userSchema.methods.toSafeObject = function toSafeObject() {
   const user = this.toObject();
   delete user.password;
   delete user.passwordChangedAt;
-  delete user.role;
   delete user.isActive;
   return user;
 };

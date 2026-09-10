@@ -42,7 +42,11 @@ class AuthController {
     return ApiResponse.send(res, 200, null, 'Logout successful');
   };
 
-  static me = asyncHandler(async (req, res) => ApiResponse.send(res, 200, { user: req.user.toSafeObject() }, 'Profile retrieved'));
+  static me = asyncHandler(async (req, res) => {
+    const safeUser = req.user.toSafeObject();
+    safeUser.role = req.user.role;
+    return ApiResponse.send(res, 200, { user: safeUser }, 'Profile retrieved');
+  });
 }
 
 module.exports = AuthController;

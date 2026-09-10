@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, ArrowUpRight, Gift, ShieldCheck, Sparkles, Truck, Crown, Leaf, Clock3, BadgeCheck, Gem, Quote } from 'lucide-react';
@@ -42,10 +42,31 @@ const reveal = {
 
 export const HomePage = () => {
   const [email, setEmail] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-  const bestsellerProducts = getBestSellers().slice(0, 4);
-  const featuredProducts = getFeaturedProducts().slice(0, 4);
-  const featuredProduct = getProducts()[0] || { slug: 'shop' };
+const [submitted, setSubmitted] = useState(false);
+
+const [bestsellerProducts, setBestsellerProducts] = useState([]);
+const [featuredProducts, setFeaturedProducts] = useState([]);
+const [featuredProduct, setFeaturedProduct] = useState({ slug: 'shop' });
+
+useEffect(() => {
+  const loadHomeProducts = async () => {
+    try {
+      const [bestSellers, featured, products] = await Promise.all([
+        getBestSellers(),
+        getFeaturedProducts(),
+        getProducts(),
+      ]);
+
+      setBestsellerProducts(bestSellers.slice(0, 4));
+      setFeaturedProducts(featured.slice(0, 4));
+      setFeaturedProduct(products[0] || { slug: 'shop' });
+    } catch (error) {
+      console.error('Failed to load home products:', error);
+    }
+  };
+
+  loadHomeProducts();
+}, []);
 
   const handleNewsletterSubmit = (event) => {
     event.preventDefault();
@@ -96,7 +117,12 @@ export const HomePage = () => {
             <div className="absolute bottom-7 left-0 max-w-[240px] border border-white/15 bg-[#19382e]/90 p-5 backdrop-blur-sm sm:left-4">
               <p className="text-[10px] uppercase tracking-[.3em] text-[#dfbd7f]">The signature</p>
               <p className="mt-2 font-serif text-2xl leading-tight">Oud Kraft Mari</p>
-              <Link to={`/product/${featuredProduct.slug}`} className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-[#e0be7f]">Discover the scent <ArrowRight size={14} /></Link>
+              <Link
+  to={featuredProduct ? `/product/${featuredProduct.slug}` : '/shop'}
+  className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-[#e0be7f]"
+>
+  Discover the scent <ArrowRight size={14} />
+</Link>
             </div>
             <p className="absolute right-0 top-1/2 hidden -translate-y-1/2 translate-x-[38%] rotate-90 text-[10px] uppercase tracking-[.45em] text-[#d8b87a] xl:block">Est. in Abu Dhabi · 2026</p>
           </motion.div>
@@ -131,7 +157,7 @@ export const HomePage = () => {
           <SectionTitle eyebrow="Featured collections" title="Curated for modern luxury" description="A selection of refined scents designed for collectors, contemporary gifting and everyday rituals." />
           <div className="mt-10 grid gap-6 lg:grid-cols-2">
             {featuredProducts.map((product, index) => (
-              <motion.div key={product.id} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.55, delay: index * 0.08 }} className="overflow-hidden rounded-[30px] border border-[#e0d2bb] bg-white shadow-[0_20px_60px_-30px_rgba(13,59,46,0.25)]">
+              <motion.div key={product._id || product.id} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.55, delay: index * 0.08 }} className="overflow-hidden rounded-[30px] border border-[#e0d2bb] bg-white shadow-[0_20px_60px_-30px_rgba(13,59,46,0.25)]">
                 <div className="grid gap-0 md:grid-cols-[0.8fr_1.2fr]">
                   <img src={product.images[0]} alt={product.name} className="h-52 w-full object-cover md:h-full" />
                   <div className="p-6">
@@ -158,7 +184,7 @@ export const HomePage = () => {
           </div>
           <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
             {bestsellerProducts.map((product, index) => (
-              <motion.div key={product.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.55, delay: index * 0.08 }}>
+              <motion.div key={product._id || product.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.55, delay: index * 0.08 }}>
                 <ProductCard product={product} />
               </motion.div>
             ))}

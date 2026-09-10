@@ -1,5 +1,13 @@
-import { useRoutes, BrowserRouter } from 'react-router-dom';
+import { useRoutes, BrowserRouter, Navigate } from 'react-router-dom';
 import { HomePage, ShopPage, ProductPage, CartPage, WishlistPage, CheckoutPage, GiftStudioPage, AboutPage, ContactPage, FAQPage, AuthPage, OrdersPage, TrackOrderPage, PolicyPage, NotFound } from '../';
+import { AdminAuthProvider } from '../../context';
+import { AdminRoute } from '../../components/admin/AdminRoute';
+import { AdminLayout } from '../../components/admin/AdminLayout';
+import { AdminLoginPage } from '../admin/AdminLoginPage';
+import { AdminDashboardPage } from '../admin/AdminDashboardPage';
+import { AdminProductsPage } from '../admin/AdminProductsPage';
+import { AdminOrdersPage } from '../admin/AdminOrdersPage';
+import { AdminCustomersPage } from '../admin/AdminCustomersPage';
 import './App.css';
 
 const AppRoutes = () => {
@@ -27,8 +35,28 @@ const AppRoutes = () => {
     { path: '/terms', element: <PolicyPage title="Terms & Conditions" /> },
     { path: '/shipping', element: <PolicyPage title="Shipping Policy" /> },
     { path: '/returns', element: <PolicyPage title="Return Policy" /> },
+
+    // Admin routes
+    { path: '/admin/login', element: <AdminLoginPage /> },
+    {
+      path: '/admin',
+      element: (
+        <AdminRoute>
+          <AdminLayout />
+        </AdminRoute>
+      ),
+      children: [
+        { index: true, element: <Navigate to="/admin/dashboard" replace /> },
+        { path: 'dashboard', element: <AdminDashboardPage /> },
+        { path: 'products', element: <AdminProductsPage /> },
+        { path: 'orders', element: <AdminOrdersPage /> },
+        { path: 'customers', element: <AdminCustomersPage /> },
+      ],
+    },
+
     { path: '*', element: <NotFound /> }
   ]);
+
 
   return routes;
 };
@@ -36,7 +64,9 @@ const AppRoutes = () => {
 export const App = () => {
   return (
     <BrowserRouter>
-      <AppRoutes />
+      <AdminAuthProvider>
+        <AppRoutes />
+      </AdminAuthProvider>
     </BrowserRouter>
   );
-};
+};

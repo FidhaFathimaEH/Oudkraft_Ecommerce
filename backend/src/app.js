@@ -10,8 +10,10 @@ const sanitize = require('./middleware/sanitize');
 const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
 const { API_PREFIX, HEALTH_PATH } = require('./constants');
+const path = require('path');
 
 const app = express();
+app.use('/images', express.static(path.join(__dirname, '../public/images')));
 app.disable('x-powered-by');
 app.use(helmet());
 app.use(cors({ origin: clientUrl, credentials: true }));
