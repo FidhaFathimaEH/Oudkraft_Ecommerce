@@ -5,7 +5,7 @@ import { getCart, saveCart } from '../services/cart';
 import { deliveryConfig } from '../config/businessConfig';
 import { paymentMethods } from '../services/payments';
 
-const API_BASE_URL = 'http://localhost:5000/api/v1';
+const API_BASE_URL = '/api/v1';
 
 export const CheckoutPage = () => {
   const [cartItems, setCartItems] = useState(() => getCart());
