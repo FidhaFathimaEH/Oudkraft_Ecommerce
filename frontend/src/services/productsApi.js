@@ -1,4 +1,4 @@
-const API_BASE_URL = '/api/v1';
+import { getApiBaseUrl } from '../config/apiConfig';
 
 export const getProductsFromApi = async (params = {}) => {
   const searchParams = new URLSearchParams();
@@ -10,9 +10,10 @@ export const getProductsFromApi = async (params = {}) => {
   });
 
   const query = searchParams.toString();
+  const baseUrl = getApiBaseUrl();
 
   const response = await fetch(
-    `${API_BASE_URL}/products${query ? `?${query}` : ''}`
+    `${baseUrl}/products${query ? `?${query}` : ''}`
   );
 
   if (!response.ok) {
@@ -23,8 +24,9 @@ export const getProductsFromApi = async (params = {}) => {
 };
 
 export const getProductBySlugFromApi = async (slug) => {
+  const baseUrl = getApiBaseUrl();
   const response = await fetch(
-    `${API_BASE_URL}/products/${encodeURIComponent(slug)}`
+    `${baseUrl}/products/${encodeURIComponent(slug)}`
   );
 
   if (!response.ok) {

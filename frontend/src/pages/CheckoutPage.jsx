@@ -4,8 +4,7 @@ import { Layout } from '../components/Layout';
 import { getCart, saveCart } from '../services/cart';
 import { deliveryConfig } from '../config/businessConfig';
 import { paymentMethods } from '../services/payments';
-
-const API_BASE_URL = '/api/v1';
+import { getApiBaseUrl } from '../config/apiConfig';
 
 export const CheckoutPage = () => {
   const [cartItems, setCartItems] = useState(() => getCart());
@@ -180,7 +179,8 @@ export const CheckoutPage = () => {
         ),
       };
 
-      const response = await fetch(`${API_BASE_URL}/orders`, {
+      const baseUrl = getApiBaseUrl();
+      const response = await fetch(`${baseUrl}/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

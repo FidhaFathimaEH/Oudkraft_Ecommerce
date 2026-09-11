@@ -1,7 +1,8 @@
-const API_BASE_URL = '/api/v1';
+import { getApiBaseUrl } from '../config/apiConfig';
 
 const request = async (url) => {
-  const response = await fetch(`${API_BASE_URL}${url}`);
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}${url}`);
 
   const data = await response.json();
 
