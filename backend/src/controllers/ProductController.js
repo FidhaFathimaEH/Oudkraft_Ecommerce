@@ -2,7 +2,7 @@ const Product = require('../models/Product');
 
 const getImageUrl = (image) => {
   if (typeof image === 'number') {
-    return `http://localhost:5000/images/perfumes/perfume${image}.jpeg`;
+    return `/images/perfumes/perfume${image}.jpeg`;
   }
 
   return image;
@@ -13,7 +13,7 @@ const formatProductImages = (product) => ({
   images: (product.images || []).map(getImageUrl),
   image360:
   typeof product.image360 === 'number'
-    ? `http://localhost:5000/images/perfumes/perfume${product.image360}.jpeg`
+    ? `/images/perfumes/perfume${product.image360}.jpeg`
     : product.image360,
 });
 

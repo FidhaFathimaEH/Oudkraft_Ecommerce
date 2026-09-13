@@ -1,8 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Loader2, AlertCircle, Sparkles, Image as ImageIcon } from 'lucide-react';
+import {
+  X,
+  Loader2,
+  AlertCircle,
+  Sparkles,
+  Image as ImageIcon,
+  Upload,
+  Trash2,
+  Crown,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+} from 'lucide-react';
 import { createProduct, updateProduct } from '../../services/admin';
+import { uploadProductImages } from '../../services/upload';
 
 const CATEGORIES = [
   'Eau de Parfum',
@@ -58,6 +71,11 @@ export const ProductFormModal = ({ isOpen, onClose, onSuccess, initialProduct })
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState('');
+  const [dragActive, setDragActive] = useState(false);
+  const [manualUrlInput, setManualUrlInput] = useState('');
+  const fileInputRef = useRef(null);
 
   // Pre-fill form on edit or reset on create
   useEffect(() => {
@@ -92,6 +110,8 @@ export const ProductFormModal = ({ isOpen, onClose, onSuccess, initialProduct })
       });
       setSlugManuallyEdited(true);
       setError('');
+      setImageUploadError('');
+      setManualUrlInput('');
     } else if (isOpen) {
       setForm({
         name: '',
@@ -118,6 +138,8 @@ export const ProductFormModal = ({ isOpen, onClose, onSuccess, initialProduct })
       });
       setSlugManuallyEdited(false);
       setError('');
+      setImageUploadError('');
+      setManualUrlInput('');
     }
   }, [initialProduct, isOpen]);
 
@@ -147,6 +169,84 @@ export const ProductFormModal = ({ isOpen, onClose, onSuccess, initialProduct })
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
+  };
+
+  const currentImages = parseArrayInput(form.images);
+
+  const handleFiles = async (fileList) => {
+    if (!fileList || fileList.length === 0) return;
+    setImageUploadError('');
+
+    const files = Array.from(fileList);
+    if (files.length > 5) {
+      setImageUploadError('You can upload a maximum of 5 images at once.');
+      return;
+    }
+
+    const validFiles = [];
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) {
+        setImageUploadError(`"${file.name}" is not a supported image file (JPEG, PNG, WebP, GIF, AVIF).`);
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setImageUploadError(`"${file.name}" exceeds the 5 MB maximum file size.`);
+        return;
+      }
+      validFiles.push(file);
+    }
+
+    setUploadingImages(true);
+    try {
+      const uploadRes = await uploadProductImages(validFiles);
+      const newUrls = (Array.isArray(uploadRes) ? uploadRes : [uploadRes]).map((item) => item.url);
+      const updatedList = [...currentImages, ...newUrls];
+      setForm((prev) => ({ ...prev, images: updatedList.join(', ') }));
+    } catch (err) {
+      setImageUploadError(err?.message || 'Failed to upload image(s).');
+    } finally {
+      setUploadingImages(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleSetHero = (index) => {
+    if (index <= 0 || index >= currentImages.length) return;
+    const hero = currentImages[index];
+    const remaining = currentImages.filter((_, idx) => idx !== index);
+    const updated = [hero, ...remaining];
+    setForm((prev) => ({ ...prev, images: updated.join(', ') }));
+  };
+
+  const handleMoveImage = (fromIndex, toIndex) => {
+    if (
+      fromIndex < 0 ||
+      toIndex < 0 ||
+      fromIndex >= currentImages.length ||
+      toIndex >= currentImages.length
+    ) {
+      return;
+    }
+    const updated = [...currentImages];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.splice(toIndex, 0, moved);
+    setForm((prev) => ({ ...prev, images: updated.join(', ') }));
+  };
+
+  const handleRemoveImage = (index) => {
+    const updated = currentImages.filter((_, idx) => idx !== index);
+    setForm((prev) => ({ ...prev, images: updated.join(', ') }));
+  };
+
+  const handleAddManualUrl = (e) => {
+    if (e) e.preventDefault();
+    const trimmed = manualUrlInput.trim();
+    if (!trimmed) return;
+    const updated = [...currentImages, trimmed];
+    setForm((prev) => ({ ...prev, images: updated.join(', ') }));
+    setManualUrlInput('');
   };
 
   const handleSubmit = async (e) => {
@@ -513,11 +613,230 @@ export const ProductFormModal = ({ isOpen, onClose, onSuccess, initialProduct })
               </div>
 
               {/* Section 4: Imagery & Story */}
-              <div className="rounded-2xl border border-[#e3d9c4] bg-white p-5 sm:p-6 shadow-sm space-y-4">
-                <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-[#C6A15B]">
-                  4. Imagery & Fragrance Story
-                </h4>
+              <div className="rounded-2xl border border-[#e3d9c4] bg-white p-5 sm:p-6 shadow-sm space-y-5">
+                <div className="flex items-center justify-between border-b border-[#e3d9c4]/60 pb-3">
+                  <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-[#C6A15B] flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4" />
+                    <span>4. Flacon Imagery & Story</span>
+                  </h4>
+                  <span className="text-[11px] font-medium text-[#5b5b5b]">
+                    {currentImages.length} {currentImages.length === 1 ? 'image' : 'images'}
+                  </span>
+                </div>
 
+                {/* Upload Error Alert */}
+                {imageUploadError && (
+                  <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+                    <AlertCircle className="h-4 w-4 shrink-0 text-red-600 mt-0.5" />
+                    <div className="flex-1 leading-relaxed">{imageUploadError}</div>
+                    <button
+                      type="button"
+                      onClick={() => setImageUploadError('')}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Image Upload Area */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#171311] mb-1.5">
+                    Upload Product Images (Cloudinary CDN)
+                  </label>
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setDragActive(true);
+                    }}
+                    onDragLeave={() => setDragActive(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setDragActive(false);
+                      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                        handleFiles(e.dataTransfer.files);
+                      }
+                    }}
+                    onClick={() => !uploadingImages && fileInputRef.current?.click()}
+                    className={`relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 text-center transition-all cursor-pointer ${
+                      dragActive
+                        ? 'border-[#0D3B2E] bg-[#0D3B2E]/5'
+                        : 'border-[#e3d9c4] bg-[#f8f3ea]/40 hover:border-[#C6A15B] hover:bg-[#f8f3ea]'
+                    } ${uploadingImages ? 'pointer-events-none opacity-60' : ''}`}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                      className="hidden"
+                      onChange={(e) => handleFiles(e.target.files)}
+                      disabled={uploadingImages}
+                    />
+
+                    {uploadingImages ? (
+                      <div className="flex flex-col items-center gap-2 py-2">
+                        <Loader2 className="h-7 w-7 animate-spin text-[#0D3B2E]" />
+                        <span className="text-xs font-semibold text-[#0D3B2E]">
+                          Uploading image(s) to Cloudinary...
+                        </span>
+                        <span className="text-[11px] text-[#5b5b5b]">
+                          Generating high-performance CDN URLs
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0D3B2E]/10 text-[#0D3B2E]">
+                          <Upload className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-[#171311]">
+                            Click to browse or drag and drop flacon photos
+                          </p>
+                          <p className="text-[11px] text-[#5b5b5b] mt-0.5">
+                            Supports JPEG, PNG, WebP up to 5 MB each (up to 5 images at once)
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Visual Gallery Preview & Reordering */}
+                {currentImages.length > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-semibold text-[#171311]">
+                        Configured Images Preview & Ordering
+                      </label>
+                      <span className="text-[11px] text-[#5b5b5b]">
+                        The 1st flacon photo serves as the storefront Hero
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {currentImages.map((imgUrl, idx) => {
+                        const isHero = idx === 0;
+                        return (
+                          <div
+                            key={`${imgUrl}-${idx}`}
+                            className={`group relative flex flex-col overflow-hidden rounded-xl border bg-white p-2 shadow-sm transition-all ${
+                              isHero
+                                ? 'border-[#C6A15B] ring-2 ring-[#C6A15B]/30'
+                                : 'border-[#e3d9c4] hover:border-[#0D3B2E]/40'
+                            }`}
+                          >
+                            {/* Image Container */}
+                            <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-[#f8f3ea]">
+                              <img
+                                src={imgUrl}
+                                alt={`Product view ${idx + 1}`}
+                                onError={(e) => {
+                                  e.currentTarget.src =
+                                    'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="%23ccc" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>';
+                                }}
+                                className="h-full w-full object-cover"
+                              />
+
+                              {/* Hero Badge */}
+                              {isHero ? (
+                                <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded-full bg-[#0D3B2E] px-2 py-0.5 text-[10px] font-bold text-[#C6A15B] shadow">
+                                  <Crown className="h-3 w-3" />
+                                  <span>Hero Flacon</span>
+                                </span>
+                              ) : (
+                                <span className="absolute left-1.5 top-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+                                  #{idx + 1}
+                                </span>
+                              )}
+
+                              {/* Remove Button */}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveImage(idx)}
+                                title="Remove image"
+                                className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-red-600/90 text-white shadow hover:bg-red-700 transition-colors"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </div>
+
+                            {/* Card Controls */}
+                            <div className="mt-2 flex items-center justify-between gap-1 pt-1 border-t border-[#e3d9c4]/50">
+                              {!isHero ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleSetHero(idx)}
+                                  className="inline-flex items-center gap-1 text-[10px] font-bold text-[#0D3B2E] hover:text-[#C6A15B] transition-colors"
+                                >
+                                  <Crown className="h-3 w-3" />
+                                  <span>Make Hero</span>
+                                </button>
+                              ) : (
+                                <span className="text-[10px] font-bold text-[#C6A15B]">
+                                  Main Display
+                                </span>
+                              )}
+
+                              <div className="flex items-center gap-0.5 ml-auto">
+                                <button
+                                  type="button"
+                                  disabled={idx === 0}
+                                  onClick={() => handleMoveImage(idx, idx - 1)}
+                                  title="Move earlier"
+                                  className="flex h-5 w-5 items-center justify-center rounded hover:bg-[#f8f3ea] text-[#5b5b5b] disabled:opacity-25"
+                                >
+                                  <ChevronLeft className="h-3 w-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={idx === currentImages.length - 1}
+                                  onClick={() => handleMoveImage(idx, idx + 1)}
+                                  title="Move later"
+                                  className="flex h-5 w-5 items-center justify-center rounded hover:bg-[#f8f3ea] text-[#5b5b5b] disabled:opacity-25"
+                                >
+                                  <ChevronRight className="h-3 w-3" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Quick Add Single URL Fallback */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#171311] mb-1">
+                    Quick Add via Single URL
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={manualUrlInput}
+                      onChange={(e) => setManualUrlInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddManualUrl();
+                        }
+                      }}
+                      placeholder="https://images.example.com/fragrance.jpg"
+                      className="flex-1 font-mono rounded-xl border border-[#e3d9c4] bg-[#f8f3ea]/50 px-3.5 py-2 text-xs text-[#171311] outline-none transition-all focus:border-[#0D3B2E] focus:bg-white focus:ring-1 focus:ring-[#0D3B2E]"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddManualUrl}
+                      className="inline-flex items-center gap-1 rounded-xl border border-[#0D3B2E] bg-[#0D3B2E] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#123F34] transition-colors"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>Add</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Raw Comma-separated Input (Preserved for full backward compatibility) */}
                 <div>
                   <label className="block text-xs font-semibold text-[#171311] flex items-center gap-1.5">
                     <ImageIcon className="h-3.5 w-3.5 text-[#C6A15B]" />
@@ -535,6 +854,7 @@ export const ProductFormModal = ({ isOpen, onClose, onSuccess, initialProduct })
                   </p>
                 </div>
 
+                {/* Short Description */}
                 <div>
                   <label className="block text-xs font-semibold text-[#171311]">
                     Short Description
@@ -548,6 +868,7 @@ export const ProductFormModal = ({ isOpen, onClose, onSuccess, initialProduct })
                   />
                 </div>
 
+                {/* Detailed Story */}
                 <div>
                   <label className="block text-xs font-semibold text-[#171311]">
                     Detailed Fragrance Story & Inspiration
@@ -569,7 +890,7 @@ export const ProductFormModal = ({ isOpen, onClose, onSuccess, initialProduct })
             <button
               type="button"
               onClick={onClose}
-              disabled={submitting}
+              disabled={submitting || uploadingImages}
               className="rounded-full border border-[#e3d9c4] bg-white px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-[#5b5b5b] hover:bg-[#f8f3ea] transition-colors disabled:opacity-50"
             >
               Cancel
@@ -577,10 +898,15 @@ export const ProductFormModal = ({ isOpen, onClose, onSuccess, initialProduct })
             <button
               type="submit"
               form="product-form"
-              disabled={submitting}
+              disabled={submitting || uploadingImages}
               className="inline-flex items-center gap-2 rounded-full border border-[#0D3B2E] bg-[#0D3B2E] px-6 py-2.5 text-xs font-bold uppercase tracking-[0.15em] text-white shadow-sm hover:bg-[#123F34] transition-all disabled:opacity-50 active:scale-95"
             >
-              {submitting ? (
+              {uploadingImages ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Uploading photos...</span>
+                </>
+              ) : submitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span>{isEdit ? 'Updating...' : 'Creating...'}</span>

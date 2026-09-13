@@ -13,9 +13,12 @@ const { API_PREFIX, HEALTH_PATH } = require('./constants');
 const path = require('path');
 
 const app = express();
+app.set('trust proxy', 1);
 app.use('/images', express.static(path.join(__dirname, '../public/images')));
 app.disable('x-powered-by');
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
 app.use(cors({ origin: clientUrl, credentials: true }));
 app.use(compression());
 app.use(requestLogger);

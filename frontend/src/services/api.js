@@ -1,7 +1,8 @@
-const API_BASE_URL = '/api/v1';
+import { getApiBaseUrl } from '../config/apiConfig';
 
 const request = async (endpoint, options = {}) => {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}${endpoint}`, {
     headers: {
       'Content-Type': 'application/json',
       ...options.headers,
@@ -43,6 +44,7 @@ export const getProductReviews = async (productId) => {
 export const createReview = async (reviewData) => {
   return request('/reviews', {
     method: 'POST',
+    credentials: 'include',
     body: JSON.stringify(reviewData),
   });
 };
@@ -50,6 +52,7 @@ export const createReview = async (reviewData) => {
 export const updateReview = async (reviewId, reviewData) => {
   return request(`/reviews/${reviewId}`, {
     method: 'PATCH',
+    credentials: 'include',
     body: JSON.stringify(reviewData),
   });
 };
@@ -57,5 +60,6 @@ export const updateReview = async (reviewId, reviewData) => {
 export const deleteReview = async (reviewId) => {
   return request(`/reviews/${reviewId}`, {
     method: 'DELETE',
+    credentials: 'include',
   });
 };

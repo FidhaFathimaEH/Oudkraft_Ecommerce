@@ -3,20 +3,30 @@ const dotenv = require('dotenv');
 
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
-const isDevelopment = (process.env.NODE_ENV || 'development') === 'development';
+const nodeEnv = process.env.NODE_ENV || 'development';
+const isDevelopment = nodeEnv === 'development';
+const isProduction = nodeEnv === 'production';
+
+const rawJwtSecret = process.env.JWT_SECRET;
+if (isProduction) {
+  if (!rawJwtSecret) {
+    throw new Error('FATAL: JWT_SECRET environment variable is required in production.');
+  }
+  if (rawJwtSecret.trim() === 'dev-secret' || rawJwtSecret.trim().toLowerCase() === 'dev-secret') {
+    throw new Error('FATAL: Insecure development default value for JWT_SECRET cannot be used in production.');
+  }
+}
 
 module.exports = {
   port: process.env.PORT || 5000,
 
-  nodeEnv: process.env.NODE_ENV || 'development',
+  nodeEnv,
 
   mongoUri:
     process.env.MONGODB_URI ||
     'mongodb://127.0.0.1:27017/oudkraft',
 
-  jwtSecret:
-    process.env.JWT_SECRET ||
-    'dev-secret',
+  jwtSecret: rawJwtSecret || 'dev-secret',
 
   jwtExpiresIn:
     process.env.JWT_EXPIRES_IN ||
