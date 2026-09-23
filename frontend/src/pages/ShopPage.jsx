@@ -320,6 +320,8 @@ export const ShopPage = () => {
             eyebrow="Curated collection"
             title="Shop Oud Kraft"
             description="Browse refined perfumes designed for gifting, daily luxury and memorable moments."
+            titleClassName="text-white"
+            descriptionClassName="text-[#dfded5]"
           />
         </div>
       </motion.section>

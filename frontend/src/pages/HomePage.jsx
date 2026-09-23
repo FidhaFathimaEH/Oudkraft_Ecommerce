@@ -88,7 +88,7 @@ useEffect(() => {
         <div className="absolute left-[49%] top-0 hidden h-full w-px bg-[#d8b87a]/25 lg:block" />
         <div className="relative mx-auto grid min-h-[100svh] max-w-7xl items-center gap-8 px-4 py-20 sm:px-6 lg:grid-cols-[.9fr_1.1fr] lg:px-8 lg:py-24">
           <motion.div initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, delay: 0.1 }} className="relative z-10 max-w-xl lg:pb-4">
-            <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[.42em] text-[#e0be7f]"><span className="h-px w-10 bg-[#e0be7f]" /> Fine fragrances · Abu Dhabi</div>
+            <div className="flex items-center gap-2.5 sm:gap-3 text-[10px] font-semibold uppercase tracking-[.22em] sm:tracking-[.42em] text-[#e0be7f]"><span className="h-px w-6 sm:w-10 shrink-0 bg-[#e0be7f]" /> Fine fragrances · Abu Dhabi</div>
             <h1 className="mt-7 font-serif text-5xl leading-[.88] tracking-[-.045em] sm:text-6xl lg:text-8xl">Leave a<br /><em className="font-normal text-[#dfbd7f]">lasting trace.</em></h1>
             <p className="mt-8 max-w-lg text-base leading-8 text-[#dfded5] sm:text-lg">{businessConfig.heroDescription} Composed around rare ingredients and the unmistakable warmth of oud.</p>
             <div className="mt-9 flex flex-wrap gap-3">
