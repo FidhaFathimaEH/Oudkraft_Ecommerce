@@ -49,6 +49,7 @@ app.use(`${API_PREFIX}/newsletter`, require('./routes/newsletterRoutes'));
 app.use(`${API_PREFIX}/contact`, require('./routes/contactRoutes'));
 app.use(`${API_PREFIX}/users`, require('./routes/userRoutes'));
 app.use(`${API_PREFIX}/admin`, require('./routes/adminRoutes'));
+app.use(`${API_PREFIX}/settings`, require('./routes/settingRoutes'));
 
 app.use(notFound);
 app.use(errorHandler);

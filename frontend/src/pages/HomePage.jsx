@@ -9,6 +9,7 @@ import { TrustStrip } from '../components/ui/TrustStrip';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { ScentQuiz } from '../components/ScentQuiz';
 import { getBestSellers, getFeaturedProducts, getProducts } from '../services/products';
+import { getHeroBanner } from '../services/settings';
 import perfume1 from '../assets/perfumes/perfume1.jpeg';
 import perfume3 from '../assets/perfumes/perfume3.jpeg';
 import perfume5 from '../assets/perfumes/perfume5.jpeg';
@@ -42,31 +43,44 @@ const reveal = {
 
 export const HomePage = () => {
   const [email, setEmail] = useState('');
-const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
-const [bestsellerProducts, setBestsellerProducts] = useState([]);
-const [featuredProducts, setFeaturedProducts] = useState([]);
-const [featuredProduct, setFeaturedProduct] = useState({ slug: 'shop' });
+  const [bestsellerProducts, setBestsellerProducts] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [featuredProduct, setFeaturedProduct] = useState({ slug: 'shop' });
+  const [dynamicHeroUrl, setDynamicHeroUrl] = useState(null);
 
-useEffect(() => {
-  const loadHomeProducts = async () => {
-    try {
-      const [bestSellers, featured, products] = await Promise.all([
-        getBestSellers(),
-        getFeaturedProducts(),
-        getProducts(),
-      ]);
+  useEffect(() => {
+    const loadHomeProducts = async () => {
+      try {
+        const [bestSellers, featured, products] = await Promise.all([
+          getBestSellers(),
+          getFeaturedProducts(),
+          getProducts(),
+        ]);
 
-      setBestsellerProducts(bestSellers.slice(0, 4));
-      setFeaturedProducts(featured.slice(0, 4));
-      setFeaturedProduct(products[0] || { slug: 'shop' });
-    } catch (error) {
-      console.error('Failed to load home products:', error);
-    }
-  };
+        setBestsellerProducts(bestSellers.slice(0, 4));
+        setFeaturedProducts(featured.slice(0, 4));
+        setFeaturedProduct(products[0] || { slug: 'shop' });
+      } catch (error) {
+        console.error('Failed to load home products:', error);
+      }
+    };
 
-  loadHomeProducts();
-}, []);
+    const loadHeroBanner = async () => {
+      try {
+        const bannerData = await getHeroBanner();
+        if (bannerData && typeof bannerData.imageUrl === 'string' && bannerData.imageUrl.trim()) {
+          setDynamicHeroUrl(bannerData.imageUrl.trim());
+        }
+      } catch {
+        // Silently fall back to default heroImage
+      }
+    };
+
+    loadHomeProducts();
+    loadHeroBanner();
+  }, []);
 
   const handleNewsletterSubmit = (event) => {
     event.preventDefault();
@@ -110,7 +124,7 @@ useEffect(() => {
             <motion.img
               whileHover={{ scale: 1.03, rotate: -0.5 }}
               transition={{ duration: 0.45 }}
-              src={heroImage}
+              src={dynamicHeroUrl || heroImage}
               alt="Oud Kraft signature fragrance"
               className="absolute bottom-0 right-5 h-[94%] w-[82%] object-cover grayscale-[8%] shadow-[0_35px_70px_-30px_rgba(0,0,0,0.85)] sm:right-8"
             />
