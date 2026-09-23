@@ -70,8 +70,16 @@ export const Layout = ({ children }) => {
           </div>
         </div>
       </footer>
-      <a href={`https://wa.me/${businessConfig.whatsapp}`} target="_blank" rel="noreferrer" className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-3 text-sm font-semibold text-white shadow-lg">
-        <MessageCircle size={16} /> Order / Ask on WhatsApp
+      <a
+        href={`https://wa.me/${businessConfig.whatsapp}`}
+        target="_blank"
+        rel="noreferrer"
+        title="Order / Ask on WhatsApp"
+        aria-label="Order or ask on WhatsApp"
+        className="fixed bottom-5 right-5 z-30 flex h-12 w-12 items-center justify-center gap-2 rounded-full bg-[#25D366] text-sm font-semibold text-white shadow-lg transition-transform hover:scale-105 active:scale-95 sm:h-auto sm:w-auto sm:px-4 sm:py-3 sm:justify-start"
+      >
+        <MessageCircle size={18} className="shrink-0" />
+        <span className="hidden sm:inline">Order / Ask on WhatsApp</span>
       </a>
     </div>
   );

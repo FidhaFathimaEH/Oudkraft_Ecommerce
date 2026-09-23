@@ -180,6 +180,19 @@ export const Header = () => {
     setSearchQuery('');
   }, [location.pathname]);
 
+  // Lock body scroll when mobile drawer or search overlay is open
+  useEffect(() => {
+    if (mobileOpen || searchOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileOpen, searchOpen]);
+
   // Focus search input when search is opened
   useEffect(() => {
     if (searchOpen) {
@@ -280,28 +293,29 @@ export const Header = () => {
   };
 
   return (
-    <header
-      ref={headerRef}
+    <>
+      <header
+        ref={headerRef}
       className="sticky top-0 z-40 border-b border-[#e8ded0]/80 bg-[#f8f3ea]/95 backdrop-blur-md transition-shadow"
     >
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* LEFT: Logo & Brand Link */}
-        <div className="flex items-center">
+        <div className="flex shrink-0 items-center">
           <Link
             to="/"
-            className="group flex items-center gap-3 transition-opacity hover:opacity-90"
+            className="group flex items-center gap-2.5 sm:gap-3 transition-opacity hover:opacity-90"
             aria-label="Oud Kraft Homepage"
           >
             <img
               src={oudKraftLogo}
               alt="Oud Kraft"
-              className="h-10 w-10 object-contain transition-transform duration-300 group-hover:scale-105"
+              className="h-9 w-9 sm:h-10 sm:w-10 object-contain transition-transform duration-300 group-hover:scale-105"
             />
             <div className="flex flex-col">
-              <span className="font-serif text-xl font-semibold tracking-[0.14em] text-[#0D3B2E] transition-colors group-hover:text-[#C6A15B]">
+              <span className="font-serif text-lg sm:text-xl font-semibold tracking-[0.12em] sm:tracking-[0.14em] text-[#0D3B2E] whitespace-nowrap transition-colors group-hover:text-[#C6A15B]">
                 {businessConfig.brandName}
               </span>
-              <span className="text-[9px] font-medium uppercase tracking-[0.32em] text-[#787165]">
+              <span className="text-[8px] sm:text-[9px] font-medium uppercase tracking-[0.28em] sm:tracking-[0.32em] text-[#787165]">
                 ABU DHABI
               </span>
             </div>
@@ -406,20 +420,20 @@ export const Header = () => {
             {searchOpen ? <X size={19} /> : <Search size={19} />}
           </button>
 
-          {/* Account */}
+          {/* Account (hidden on mobile, accessible in drawer) */}
           <Link
             to="/account"
             aria-label="My Account"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[#0D3B2E] transition-colors hover:bg-[#ede3d2]/70"
+            className="hidden sm:flex h-10 w-10 items-center justify-center rounded-full text-[#0D3B2E] transition-colors hover:bg-[#ede3d2]/70"
           >
             <UserRound size={19} />
           </Link>
 
-          {/* Wishlist */}
+          {/* Wishlist (hidden on mobile, accessible in drawer) */}
           <Link
             to="/wishlist"
             aria-label={`Wishlist with ${wishlistCount} items`}
-            className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#0D3B2E] transition-colors hover:bg-[#ede3d2]/70"
+            className="relative hidden sm:flex h-10 w-10 items-center justify-center rounded-full text-[#0D3B2E] transition-colors hover:bg-[#ede3d2]/70"
           >
             <Heart size={19} />
             {wishlistCount > 0 && (
@@ -556,31 +570,32 @@ export const Header = () => {
           </motion.div>
         )}
       </AnimatePresence>
+    </header>
 
-      {/* MOBILE DRAWER */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setMobileOpen(false)}
-              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
-            />
+    {/* MOBILE DRAWER */}
+    <AnimatePresence>
+      {mobileOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setMobileOpen(false)}
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+          />
 
-            {/* Off-canvas Drawer */}
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'tween', duration: 0.28, ease: 'easeOut' }}
-              className="fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col border-l border-[#e4d8c2] bg-[#FAF5EB] shadow-2xl lg:hidden"
-            >
+          {/* Off-canvas Drawer */}
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'tween', duration: 0.28, ease: 'easeOut' }}
+            className="fixed inset-y-0 right-0 z-50 flex h-full max-h-screen w-full max-w-sm flex-col border-l border-[#e4d8c2] bg-[#FAF5EB] shadow-2xl lg:hidden"
+          >
               {/* Drawer Header */}
-              <div className="flex h-20 items-center justify-between border-b border-[#e4d8c2] px-6">
+              <div className="flex h-20 items-center justify-between border-b border-[#e4d8c2] px-4 sm:px-6">
                 <Link
                   to="/"
                   onClick={() => setMobileOpen(false)}
@@ -611,7 +626,7 @@ export const Header = () => {
               </div>
 
               {/* Navigation Accordions */}
-              <div className="flex-1 overflow-y-auto px-6 py-5">
+              <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
                 <div className="space-y-3">
                   {navigationLinks.map((nav) => {
                     const isExpanded = mobileAccordion === nav.id;
@@ -678,34 +693,34 @@ export const Header = () => {
                     <Link
                       to="/account"
                       onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-2 rounded-xl border border-[#e4d8c2] bg-white/70 p-3 text-xs font-medium text-[#0D3B2E] transition-colors hover:bg-white"
+                      className="flex min-w-0 items-center gap-2 rounded-xl border border-[#e4d8c2] bg-white/70 p-2.5 sm:p-3 text-xs font-medium text-[#0D3B2E] transition-colors hover:bg-white"
                     >
-                      <UserRound size={15} className="text-[#C6A15B]" />
-                      <span>My Account</span>
+                      <UserRound size={15} className="shrink-0 text-[#C6A15B]" />
+                      <span className="truncate">My Account</span>
                     </Link>
                     <Link
                       to="/wishlist"
                       onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-2 rounded-xl border border-[#e4d8c2] bg-white/70 p-3 text-xs font-medium text-[#0D3B2E] transition-colors hover:bg-white"
+                      className="flex min-w-0 items-center gap-2 rounded-xl border border-[#e4d8c2] bg-white/70 p-2.5 sm:p-3 text-xs font-medium text-[#0D3B2E] transition-colors hover:bg-white"
                     >
-                      <Heart size={15} className="text-[#C6A15B]" />
-                      <span>Wishlist ({wishlistCount})</span>
+                      <Heart size={15} className="shrink-0 text-[#C6A15B]" />
+                      <span className="truncate">Wishlist ({wishlistCount})</span>
                     </Link>
                     <Link
                       to="/cart"
                       onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-2 rounded-xl border border-[#e4d8c2] bg-white/70 p-3 text-xs font-medium text-[#0D3B2E] transition-colors hover:bg-white"
+                      className="flex min-w-0 items-center gap-2 rounded-xl border border-[#e4d8c2] bg-white/70 p-2.5 sm:p-3 text-xs font-medium text-[#0D3B2E] transition-colors hover:bg-white"
                     >
-                      <ShoppingBag size={15} className="text-[#C6A15B]" />
-                      <span>Cart ({cartCount})</span>
+                      <ShoppingBag size={15} className="shrink-0 text-[#C6A15B]" />
+                      <span className="truncate">Cart ({cartCount})</span>
                     </Link>
                     <Link
                       to="/track-order"
                       onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-2 rounded-xl border border-[#e4d8c2] bg-white/70 p-3 text-xs font-medium text-[#0D3B2E] transition-colors hover:bg-white"
+                      className="flex min-w-0 items-center gap-2 rounded-xl border border-[#e4d8c2] bg-white/70 p-2.5 sm:p-3 text-xs font-medium text-[#0D3B2E] transition-colors hover:bg-white"
                     >
-                      <ArrowRight size={15} className="text-[#C6A15B]" />
-                      <span>Track Order</span>
+                      <ArrowRight size={15} className="shrink-0 text-[#C6A15B]" />
+                      <span className="truncate">Track Order</span>
                     </Link>
                   </div>
                 </div>
@@ -721,6 +736,6 @@ export const Header = () => {
           </>
         )}
       </AnimatePresence>
-    </header>
+    </>
   );
 };
