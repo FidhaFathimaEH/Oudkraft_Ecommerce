@@ -406,7 +406,7 @@ export const ProductPage = () => {
               duration: 0.6,
               delay: 0.08,
             }}
-            className="rounded-[32px] border border-[#e3d9c4] bg-white p-6 shadow-[0_25px_70px_-40px_rgba(13,59,46,0.45)] sm:p-8"
+            className="rounded-[32px] border border-[#e3d9c4] bg-white p-4 shadow-[0_25px_70px_-40px_rgba(13,59,46,0.45)] sm:p-8"
           >
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -414,7 +414,7 @@ export const ProductPage = () => {
                   {product.category}
                 </p>
 
-                <h1 className="mt-2 font-serif text-3xl text-[#0D3B2E]">
+                <h1 className="mt-2 font-serif text-2xl text-[#0D3B2E] sm:text-3xl">
                   {product.name}
                 </h1>
               </div>
@@ -539,47 +539,49 @@ export const ProductPage = () => {
               </div>
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center gap-4">
-              <div className="flex items-center rounded-full border border-[#e3d9c4] px-3 py-2">
-                <button
-                  onClick={() =>
-                    setQuantity((value) =>
-                      Math.max(1, value - 1)
-                    )
-                  }
-                  className="px-2 text-xl"
-                >
-                  −
-                </button>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+              <div className="flex items-center gap-2.5 sm:gap-4">
+                <div className="flex shrink-0 items-center rounded-full border border-[#e3d9c4] px-3 py-2">
+                  <button
+                    onClick={() =>
+                      setQuantity((value) =>
+                        Math.max(1, value - 1)
+                      )
+                    }
+                    className="px-2 text-xl"
+                  >
+                    −
+                  </button>
 
-                <span className="min-w-[40px] text-center">
-                  {quantity}
-                </span>
+                  <span className="min-w-[40px] text-center">
+                    {quantity}
+                  </span>
 
-                <button
-                  onClick={() =>
-                    setQuantity(
-                      (value) => value + 1
-                    )
-                  }
-                  className="px-2 text-xl"
+                  <button
+                    onClick={() =>
+                      setQuantity(
+                        (value) => value + 1
+                      )
+                    }
+                    className="px-2 text-xl"
+                  >
+                    +
+                  </button>
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={addToCart}
+                  disabled={product.stock <= 0}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#0D3B2E] px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 sm:flex-initial"
                 >
-                  +
-                </button>
+                  <ShoppingBag size={16} />
+                  {product.stock > 0
+                    ? 'Add to cart'
+                    : 'Sold out'}
+                </motion.button>
               </div>
-
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={addToCart}
-                disabled={product.stock <= 0}
-                className="flex items-center gap-2 rounded-full bg-[#0D3B2E] px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <ShoppingBag size={16} />
-                {product.stock > 0
-                  ? 'Add to cart'
-                  : 'Sold out'}
-              </motion.button>
 
               <motion.a
                 whileHover={{ scale: 1.02 }}
@@ -587,7 +589,7 @@ export const ProductPage = () => {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-2 rounded-full border border-[#e3d9c4] px-5 py-3 font-semibold text-[#0D3B2E]"
+                className="flex items-center justify-center gap-2 rounded-full border border-[#e3d9c4] px-5 py-3 font-semibold text-[#0D3B2E] sm:w-auto"
               >
                 <MessageCircle size={16} />
                 Buy Now

@@ -9,6 +9,7 @@ import { TrustStrip } from '../components/ui/TrustStrip';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { ScentQuiz } from '../components/ScentQuiz';
 import { getBestSellers, getFeaturedProducts, getProducts } from '../services/products';
+import { getHeroBanner } from '../services/settings';
 import perfume1 from '../assets/perfumes/perfume1.jpeg';
 import perfume3 from '../assets/perfumes/perfume3.jpeg';
 import perfume5 from '../assets/perfumes/perfume5.jpeg';
@@ -42,31 +43,44 @@ const reveal = {
 
 export const HomePage = () => {
   const [email, setEmail] = useState('');
-const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
-const [bestsellerProducts, setBestsellerProducts] = useState([]);
-const [featuredProducts, setFeaturedProducts] = useState([]);
-const [featuredProduct, setFeaturedProduct] = useState({ slug: 'shop' });
+  const [bestsellerProducts, setBestsellerProducts] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [featuredProduct, setFeaturedProduct] = useState({ slug: 'shop' });
+  const [dynamicHeroUrl, setDynamicHeroUrl] = useState(null);
 
-useEffect(() => {
-  const loadHomeProducts = async () => {
-    try {
-      const [bestSellers, featured, products] = await Promise.all([
-        getBestSellers(),
-        getFeaturedProducts(),
-        getProducts(),
-      ]);
+  useEffect(() => {
+    const loadHomeProducts = async () => {
+      try {
+        const [bestSellers, featured, products] = await Promise.all([
+          getBestSellers(),
+          getFeaturedProducts(),
+          getProducts(),
+        ]);
 
-      setBestsellerProducts(bestSellers.slice(0, 4));
-      setFeaturedProducts(featured.slice(0, 4));
-      setFeaturedProduct(products[0] || { slug: 'shop' });
-    } catch (error) {
-      console.error('Failed to load home products:', error);
-    }
-  };
+        setBestsellerProducts(bestSellers.slice(0, 4));
+        setFeaturedProducts(featured.slice(0, 4));
+        setFeaturedProduct(products[0] || { slug: 'shop' });
+      } catch (error) {
+        console.error('Failed to load home products:', error);
+      }
+    };
 
-  loadHomeProducts();
-}, []);
+    const loadHeroBanner = async () => {
+      try {
+        const bannerData = await getHeroBanner();
+        if (bannerData && typeof bannerData.imageUrl === 'string' && bannerData.imageUrl.trim()) {
+          setDynamicHeroUrl(bannerData.imageUrl.trim());
+        }
+      } catch {
+        // Silently fall back to default heroImage
+      }
+    };
+
+    loadHomeProducts();
+    loadHeroBanner();
+  }, []);
 
   const handleNewsletterSubmit = (event) => {
     event.preventDefault();
@@ -88,7 +102,7 @@ useEffect(() => {
         <div className="absolute left-[49%] top-0 hidden h-full w-px bg-[#d8b87a]/25 lg:block" />
         <div className="relative mx-auto grid min-h-[100svh] max-w-7xl items-center gap-8 px-4 py-20 sm:px-6 lg:grid-cols-[.9fr_1.1fr] lg:px-8 lg:py-24">
           <motion.div initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, delay: 0.1 }} className="relative z-10 max-w-xl lg:pb-4">
-            <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[.42em] text-[#e0be7f]"><span className="h-px w-10 bg-[#e0be7f]" /> Fine fragrances · Abu Dhabi</div>
+            <div className="flex items-center gap-2.5 sm:gap-3 text-[10px] font-semibold uppercase tracking-[.22em] sm:tracking-[.42em] text-[#e0be7f]"><span className="h-px w-6 sm:w-10 shrink-0 bg-[#e0be7f]" /> Fine fragrances · Abu Dhabi</div>
             <h1 className="mt-7 font-serif text-5xl leading-[.88] tracking-[-.045em] sm:text-6xl lg:text-8xl">Leave a<br /><em className="font-normal text-[#dfbd7f]">lasting trace.</em></h1>
             <p className="mt-8 max-w-lg text-base leading-8 text-[#dfded5] sm:text-lg">{businessConfig.heroDescription} Composed around rare ingredients and the unmistakable warmth of oud.</p>
             <div className="mt-9 flex flex-wrap gap-3">
@@ -110,7 +124,7 @@ useEffect(() => {
             <motion.img
               whileHover={{ scale: 1.03, rotate: -0.5 }}
               transition={{ duration: 0.45 }}
-              src={heroImage}
+              src={dynamicHeroUrl || heroImage}
               alt="Oud Kraft signature fragrance"
               className="absolute bottom-0 right-5 h-[94%] w-[82%] object-cover grayscale-[8%] shadow-[0_35px_70px_-30px_rgba(0,0,0,0.85)] sm:right-8"
             />

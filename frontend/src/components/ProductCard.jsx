@@ -119,13 +119,13 @@ export const ProductCard = ({
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
 
         {/* Product Badge */}
-        <div className="absolute left-4 top-4 rounded-full bg-[#0D3B2E] px-3 py-1 text-xs uppercase tracking-[0.3em] text-white">
+        <div className="absolute left-3 top-3 rounded-full bg-[#0D3B2E] px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white sm:left-4 sm:top-4 sm:px-3 sm:text-xs sm:tracking-[0.3em]">
           {product.bestseller ? 'Best Seller' : 'New'}
         </div>
 
         {/* Discount Badge */}
         {product.discount ? (
-          <div className="absolute left-4 top-14 rounded-full bg-[#C6A15B] px-3 py-1 text-xs uppercase tracking-[0.3em] text-white">
+          <div className="absolute left-3 top-11 rounded-full bg-[#C6A15B] px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white sm:left-4 sm:top-14 sm:px-3 sm:text-xs sm:tracking-[0.3em]">
             {product.discount} off
           </div>
         ) : null}
@@ -135,7 +135,7 @@ export const ProductCard = ({
           type="button"
           whileTap={{ scale: 0.94 }}
           onClick={toggleWishlist}
-          className="absolute right-4 top-4 rounded-full border border-[#e8dfcf] bg-white/90 p-2 text-[#0D3B2E]"
+          className="absolute right-3 top-3 rounded-full border border-[#e8dfcf] bg-white/90 p-2 text-[#0D3B2E] sm:right-4 sm:top-4"
           aria-label="Toggle wishlist"
         >
           <Heart
@@ -149,7 +149,7 @@ export const ProductCard = ({
       </div>
 
       {/* Product Information */}
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <Link
           to={`/product/${product.slug}`}
           className="block"
@@ -167,7 +167,7 @@ export const ProductCard = ({
             </div>
           </div>
 
-          <h3 className="mt-3 text-xl font-semibold text-[#0D3B2E] transition group-hover:text-[#C6A15B]">
+          <h3 className="mt-3 text-lg font-semibold text-[#0D3B2E] transition group-hover:text-[#C6A15B] sm:text-xl">
             {product.name}
           </h3>
 
@@ -194,7 +194,7 @@ export const ProductCard = ({
             type="button"
             whileTap={{ scale: 0.96 }}
             onClick={addToCart}
-            className="flex items-center gap-2 rounded-full bg-[#0D3B2E] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#123F34]"
+            className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#0D3B2E] px-3.5 py-2 text-xs font-medium text-white transition hover:bg-[#123F34] sm:gap-2 sm:px-4 sm:text-sm"
           >
             <ShoppingBag size={14} />
 
@@ -205,14 +205,14 @@ export const ProductCard = ({
             <button
               type="button"
               onClick={() => onQuickView(product)}
-              className="rounded-full border border-[#e3d9c4] px-3 py-2 text-sm text-[#0D3B2E] transition hover:border-[#C6A15B]"
+              className="shrink-0 rounded-full border border-[#e3d9c4] px-2.5 py-2 text-xs text-[#0D3B2E] transition hover:border-[#C6A15B] sm:px-3 sm:text-sm"
             >
               Quick view
             </button>
           ) : (
             <Link
               to={`/product/${product.slug}`}
-              className="rounded-full border border-[#e3d9c4] px-3 py-2 text-sm text-[#0D3B2E] transition hover:border-[#C6A15B]"
+              className="shrink-0 rounded-full border border-[#e3d9c4] px-2.5 py-2 text-xs text-[#0D3B2E] transition hover:border-[#C6A15B] sm:px-3 sm:text-sm"
             >
               Quick view
             </Link>

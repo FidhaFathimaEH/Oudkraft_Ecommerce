@@ -28,16 +28,16 @@ export const ProductGallery = ({ product }) => {
         </motion.div>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+      <div className="mt-3 sm:mt-4 grid grid-cols-3 gap-2.5 sm:gap-3">
         {product.images.map((image, index) => (
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             key={`${product.slug}-${index}`}
             onClick={() => setSelectedImage(index)}
-            className={`overflow-hidden rounded-[20px] border ${selectedImage === index ? 'border-[#C6A15B]' : 'border-[#e3d9c4]'}`}
+            className={`overflow-hidden rounded-[16px] sm:rounded-[20px] border ${selectedImage === index ? 'border-[#C6A15B]' : 'border-[#e3d9c4]'}`}
           >
-            <img src={image} alt={`${product.name} view ${index + 1}`} className="h-24 w-full object-cover" />
+            <img src={image} alt={`${product.name} view ${index + 1}`} className="h-20 sm:h-24 w-full object-cover" />
           </motion.button>
         ))}
       </div>
@@ -48,6 +48,9 @@ export const ProductGallery = ({ product }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setIsZoomOpen(false);
+            }}
             className="fixed inset-0 z-[60] flex items-center justify-center bg-[#07120f]/80 px-4 py-6"
           >
             <motion.div
