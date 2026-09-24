@@ -160,6 +160,28 @@ const orderSchema = new mongoose.Schema(
       default: 'pending',
     },
 
+    stripeSessionId: {
+      type: String,
+      sparse: true,
+      index: true,
+    },
+
+    stripePaymentIntentId: {
+      type: String,
+      sparse: true,
+      index: true,
+    },
+
+    currency: {
+      type: String,
+      default: 'aed',
+      lowercase: true,
+    },
+
+    paidAt: {
+      type: Date,
+    },
+
     status: {
       type: String,
       enum: [

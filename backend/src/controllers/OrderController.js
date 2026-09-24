@@ -8,14 +8,150 @@ const generateOrderNumber = () => {
   return `OK-${timestamp}-${random}`;
 };
 
+const round2 = (num) => Math.round((Number(num) + Number.EPSILON) * 100) / 100;
+
+const calculateDeliveryFee = (subtotal, emirate) => {
+  const FREE_DELIVERY_THRESHOLD = 250;
+  const ABU_DHABI_FEE = 20;
+  const OTHER_EMIRATES_FEE = 35;
+
+  if (Number(subtotal) >= FREE_DELIVERY_THRESHOLD) {
+    return 0;
+  }
+
+  const normalizedEmirate = (emirate || '').toString().trim().toLowerCase();
+  if (normalizedEmirate === 'abu dhabi') {
+    return ABU_DHABI_FEE;
+  }
+
+  return OTHER_EMIRATES_FEE;
+};
+
+const calculateDiscount = async (couponCode, subtotal) => {
+  if (!couponCode || typeof couponCode !== 'string' || !couponCode.trim()) {
+    return 0;
+  }
+
+  try {
+    const Coupon = require('../models/Coupon');
+    const code = couponCode.trim().toUpperCase();
+    const coupon = await Coupon.findOne({ code, isActive: true });
+
+    if (!coupon) {
+      return 0;
+    }
+
+    if (coupon.discountAmount && Number(coupon.discountAmount) > 0) {
+      return round2(Math.min(subtotal, Number(coupon.discountAmount)));
+    }
+
+    if (coupon.discountPercent && Number(coupon.discountPercent) > 0) {
+      return round2((subtotal * Number(coupon.discountPercent)) / 100);
+    }
+  } catch {
+    return 0;
+  }
+
+  return 0;
+};
+
+const resolveOrderItemsAndAmounts = async ({ items, emirate, couponCode }) => {
+  if (!Array.isArray(items) || items.length === 0) {
+    const err = new Error('At least one product is required.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const productIds = items.map(
+    (item) => item.product || item._id || item.id
+  );
+
+  const hasInvalidProductId = productIds.some((id) => !id);
+  if (hasInvalidProductId) {
+    const err = new Error('One or more product IDs are missing.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const products = await Product.find({
+    _id: { $in: productIds },
+  });
+
+  if (products.length !== productIds.length) {
+    const err = new Error('One or more products could not be found.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const orderItems = [];
+
+  for (const item of items) {
+    const productId = item.product || item._id || item.id;
+    const product = products.find(
+      (databaseProduct) =>
+        databaseProduct._id.toString() === productId.toString()
+    );
+
+    if (!product) {
+      const err = new Error(`Product not found: ${productId}`);
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const quantity = Number(item.quantity);
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      const err = new Error(`Invalid quantity for ${product.name}.`);
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const price = Number(product.price);
+    if (!Number.isFinite(price) || price < 0) {
+      const err = new Error(`Invalid price configured for ${product.name}.`);
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const lineSubtotal = round2(price * quantity);
+    orderItems.push({
+      product: product._id,
+      name: product.name,
+      slug: product.slug || '',
+      image:
+        product.images?.[0] ||
+        product.image ||
+        '',
+      size: item.size || '100 ml',
+      quantity,
+      price,
+      subtotal: lineSubtotal,
+    });
+  }
+
+  const subtotal = round2(
+    orderItems.reduce((sum, item) => sum + item.subtotal, 0)
+  );
+
+  const deliveryFee = calculateDeliveryFee(subtotal, emirate);
+  const discount = await calculateDiscount(couponCode, subtotal);
+  const total = round2(Math.max(0, subtotal + deliveryFee - discount));
+
+  return {
+    orderItems,
+    subtotal,
+    deliveryFee,
+    discount,
+    total,
+  };
+};
+
 const createOrder = async (req, res, next) => {
   try {
     const {
       customer,
       deliveryAddress,
       items,
-      deliveryFee = 0,
-      discount = 0,
+      couponCode,
       paymentMethod,
     } = req.body;
 
@@ -33,13 +169,6 @@ const createOrder = async (req, res, next) => {
       });
     }
 
-    if (!Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'At least one product is required.',
-      });
-    }
-
     if (!paymentMethod) {
       return res.status(400).json({
         success: false,
@@ -54,117 +183,17 @@ const createOrder = async (req, res, next) => {
       });
     }
 
-    const productIds = items.map(
-      (item) => item.product || item._id || item.id
-    );
-
-    const hasInvalidProductId = productIds.some(
-      (id) => !id
-    );
-
-    if (hasInvalidProductId) {
-      return res.status(400).json({
-        success: false,
-        message: 'One or more product IDs are missing.',
-      });
-    }
-
-    const products = await Product.find({
-      _id: { $in: productIds },
+    const {
+      orderItems,
+      subtotal,
+      deliveryFee,
+      discount,
+      total,
+    } = await resolveOrderItemsAndAmounts({
+      items,
+      emirate: deliveryAddress.emirate,
+      couponCode,
     });
-
-    if (products.length !== productIds.length) {
-      return res.status(400).json({
-        success: false,
-        message: 'One or more products could not be found.',
-      });
-    }
-
-    const orderItems = [];
-
-    for (const item of items) {
-      const productId = item.product || item._id || item.id;
-
-      const product = products.find(
-        (databaseProduct) =>
-          databaseProduct._id.toString() === productId.toString()
-      );
-
-      if (!product) {
-        return res.status(400).json({
-          success: false,
-          message: `Product not found: ${productId}`,
-        });
-      }
-
-      const quantity = Number(item.quantity);
-
-      if (!Number.isInteger(quantity) || quantity < 1) {
-        return res.status(400).json({
-          success: false,
-          message: `Invalid quantity for ${product.name}.`,
-        });
-      }
-
-      const price = Number(product.price);
-
-      if (!Number.isFinite(price) || price < 0) {
-        return res.status(400).json({
-          success: false,
-          message: `Invalid price configured for ${product.name}.`,
-        });
-      }
-
-      orderItems.push({
-        product: product._id,
-        name: product.name,
-        slug: product.slug || '',
-        image:
-          product.images?.[0] ||
-          product.image ||
-          '',
-        size: item.size || '100 ml',
-        quantity,
-        price,
-        subtotal: price * quantity,
-      });
-    }
-
-    const calculatedSubtotal = orderItems.reduce(
-      (sum, item) => sum + item.subtotal,
-      0
-    );
-
-    const calculatedDeliveryFee = Number(deliveryFee);
-
-    if (
-      !Number.isFinite(calculatedDeliveryFee) ||
-      calculatedDeliveryFee < 0
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid delivery fee.',
-      });
-    }
-
-    const calculatedDiscount = Number(discount);
-
-    if (
-      !Number.isFinite(calculatedDiscount) ||
-      calculatedDiscount < 0
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid discount.',
-      });
-    }
-
-    const calculatedTotal = Math.max(
-      0,
-      calculatedSubtotal +
-        calculatedDeliveryFee -
-        calculatedDiscount
-    );
 
     const order = await Order.create({
       orderNumber: generateOrderNumber(),
@@ -187,10 +216,11 @@ const createOrder = async (req, res, next) => {
 
       items: orderItems,
 
-      subtotal: calculatedSubtotal,
-      deliveryFee: calculatedDeliveryFee,
-      discount: calculatedDiscount,
-      total: calculatedTotal,
+      subtotal,
+      deliveryFee,
+      discount,
+      total,
+      currency: 'aed',
 
       paymentMethod,
       paymentStatus: 'pending',
@@ -203,6 +233,12 @@ const createOrder = async (req, res, next) => {
       data: order,
     });
   } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+      });
+    }
     next(error);
   }
 };
@@ -295,4 +331,8 @@ module.exports = {
   getOrders,
   getOrderById,
   updateOrderStatus,
+  resolveOrderItemsAndAmounts,
+  calculateDeliveryFee,
+  calculateDiscount,
+  round2,
 };
