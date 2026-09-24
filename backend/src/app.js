@@ -22,7 +22,23 @@ app.use(helmet({
 app.use(cors({ origin: clientUrl, credentials: true }));
 app.use(compression());
 app.use(requestLogger);
-app.use(express.json({ limit: '10kb' }));
+
+// Stripe webhook requires original raw body Buffer for signature verification
+app.use(
+  `${API_PREFIX}/payments/webhook`,
+  express.raw({ type: 'application/json' })
+);
+
+app.use(
+  express.json({
+    limit: '10kb',
+    verify: (req, res, buf) => {
+      if (req.originalUrl && req.originalUrl.includes('/payments/webhook')) {
+        req.rawBody = buf;
+      }
+    },
+  })
+);
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 app.use(sanitize);
@@ -42,6 +58,7 @@ app.use(`${API_PREFIX}/categories`, require('./routes/categoryRoutes'));
 app.use(`${API_PREFIX}/cart`, require('./routes/cartRoutes'));
 app.use(`${API_PREFIX}/wishlist`, require('./routes/wishlistRoutes'));
 app.use(`${API_PREFIX}/orders`, require('./routes/orderRoutes'));
+app.use(`${API_PREFIX}/payments`, require('./routes/paymentRoutes'));
 app.use(`${API_PREFIX}/reviews`, require('./routes/reviewRoutes'));
 app.use(`${API_PREFIX}/coupons`, require('./routes/couponRoutes'));
 app.use(`${API_PREFIX}/uploads`, require('./routes/uploadRoutes'));
