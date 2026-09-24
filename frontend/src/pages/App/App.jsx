@@ -1,5 +1,23 @@
 import { useRoutes, BrowserRouter, Navigate } from 'react-router-dom';
-import { HomePage, ShopPage, ProductPage, CartPage, WishlistPage, CheckoutPage, GiftStudioPage, AboutPage, ContactPage, FAQPage, AuthPage, OrdersPage, TrackOrderPage, PolicyPage, NotFound } from '../';
+import {
+  HomePage,
+  ShopPage,
+  ProductPage,
+  CartPage,
+  WishlistPage,
+  CheckoutPage,
+  CheckoutSuccessPage,
+  CheckoutCancelPage,
+  GiftStudioPage,
+  AboutPage,
+  ContactPage,
+  FAQPage,
+  AuthPage,
+  OrdersPage,
+  TrackOrderPage,
+  PolicyPage,
+  NotFound,
+} from '../';
 import { AdminAuthProvider } from '../../context';
 import { AdminRoute } from '../../components/admin/AdminRoute';
 import { AdminLayout } from '../../components/admin/AdminLayout';
@@ -22,6 +40,8 @@ const AppRoutes = () => {
     { path: '/cart', element: <CartPage /> },
     { path: '/wishlist', element: <WishlistPage /> },
     { path: '/checkout', element: <CheckoutPage /> },
+    { path: '/checkout/success', element: <CheckoutSuccessPage /> },
+    { path: '/checkout/cancel', element: <CheckoutCancelPage /> },
     { path: '/gift-studio', element: <GiftStudioPage /> },
     { path: '/about', element: <AboutPage /> },
     { path: '/contact', element: <ContactPage /> },
