@@ -5,6 +5,7 @@ import { getCart, saveCart } from '../services/cart';
 import { deliveryConfig } from '../config/businessConfig';
 import { paymentMethods, createCheckoutSession } from '../services/payments';
 import { getApiBaseUrl } from '../config/apiConfig';
+import { getAuthToken } from '../services/auth';
 
 export const CheckoutPage = () => {
   const [cartItems, setCartItems] = useState(() => getCart());
@@ -180,10 +181,15 @@ export const CheckoutPage = () => {
       };
 
       const baseUrl = getApiBaseUrl();
+      const token = getAuthToken();
+      const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
       const response = await fetch(`${baseUrl}/orders`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          ...authHeaders,
         },
         body: JSON.stringify(payload),
       });
@@ -219,8 +225,8 @@ export const CheckoutPage = () => {
           );
         }
 
-        // Initialize Stripe Checkout session
-        const sessionData = await createCheckoutSession(createdOrder._id);
+        // Initialize Stripe Checkout session with customer email verification
+        const sessionData = await createCheckoutSession(createdOrder._id, form.email);
 
         // Redirect browser to Stripe-hosted Checkout
         window.location.href = sessionData.sessionUrl;

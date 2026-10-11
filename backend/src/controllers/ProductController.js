@@ -17,6 +17,28 @@ const formatProductImages = (product) => ({
     : product.image360,
 });
 
+const SAFE_SORT_OPTIONS = {
+  '-createdAt': { createdAt: -1 },
+  'createdAt': { createdAt: 1 },
+  'newest': { createdAt: -1 },
+  'oldest': { createdAt: 1 },
+  'price': { price: 1 },
+  'price_asc': { price: 1 },
+  'price-asc': { price: 1 },
+  '-price': { price: -1 },
+  'price_desc': { price: -1 },
+  'price-desc': { price: -1 },
+  'name': { name: 1 },
+  '-name': { name: -1 },
+  'name_asc': { name: 1 },
+  'name_desc': { name: -1 },
+  'rating': { rating: -1 },
+  '-rating': { rating: -1 },
+  'featured': { featured: -1, createdAt: -1 },
+  'best': { bestseller: -1, rating: -1, createdAt: -1 },
+  'bestseller': { bestseller: -1, createdAt: -1 },
+};
+
 class ProductController {
   // GET /api/v1/products
   static async getProducts(req, res, next) {
@@ -32,8 +54,21 @@ class ProductController {
         maxPrice,
         page = 1,
         limit = 20,
-        sort = '-createdAt',
+        sort,
       } = req.query;
+
+      let sortQuery = { createdAt: -1 };
+      if (sort !== undefined && sort !== '') {
+        const requestedSort = typeof sort === 'string' ? sort.trim() : '';
+        if (SAFE_SORT_OPTIONS[requestedSort]) {
+          sortQuery = SAFE_SORT_OPTIONS[requestedSort];
+        } else {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid sort parameter. Supported options are: ${Object.keys(SAFE_SORT_OPTIONS).join(', ')}`,
+          });
+        }
+      }
 
       const filter = {};
 
@@ -84,14 +119,14 @@ class ProductController {
       const skip = (pageNumber - 1) * limitNumber;
 
       const [products, total] = await Promise.all([
-  Product.find(filter)
-    .sort(sort)
-    .skip(skip)
-    .limit(limitNumber)
-    .lean(),
+        Product.find(filter)
+          .sort(sortQuery)
+          .skip(skip)
+          .limit(limitNumber)
+          .lean(),
 
-  Product.countDocuments(filter),
-]);
+        Product.countDocuments(filter),
+      ]);
 
 const formattedProducts = products.map(formatProductImages);
 

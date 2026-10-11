@@ -4,17 +4,25 @@ const admin = require('../middleware/admin');
 
 const {
   createOrder,
+  getMyOrders,
   getOrders,
   getOrderById,
   updateOrderStatus,
 } = require('../controllers/OrderController');
 
-// Public — customers place orders
-router.post('/', createOrder);
+// Public/Optional Auth — customers place orders (captures customer identity if authenticated)
+router.post('/', auth.optionalAuth, createOrder);
 
-// Admin-only
+// Customer-isolated order history — strictly authenticated
+router.get('/my-orders', auth, getMyOrders);
+
+// Admin-only — view all orders
 router.get('/', auth, admin, getOrders);
-router.get('/:id', auth, admin, getOrderById);
+
+// Individual order access — authenticated (Admin can view all, Customer can only view own)
+router.get('/:id', auth, getOrderById);
+
+// Admin-only — update status
 router.patch('/:id/status', auth, admin, updateOrderStatus);
 
 module.exports = router;

@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from '../config/apiConfig';
+import { getAuthToken } from './auth';
 
 export const paymentMethods = [
   {
@@ -16,16 +17,29 @@ export const paymentMethods = [
 /**
  * Requests a Stripe Checkout Session for a pending order.
  * @param {string} orderId - The internal order ID created by the backend
+ * @param {string} [customerEmail] - Customer email for guest order verification
  * @returns {Promise<{ sessionId: string, sessionUrl: string, orderId: string, orderNumber: string }>}
  */
-export const createCheckoutSession = async (orderId) => {
+export const createCheckoutSession = async (orderId, customerEmail) => {
   const baseUrl = getApiBaseUrl();
+  const token = getAuthToken();
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const payload = { orderId };
+  if (customerEmail) {
+    payload.customerEmail = customerEmail;
+  }
+
   const response = await fetch(`${baseUrl}/payments/create-checkout-session`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ orderId }),
+    credentials: 'include',
+    headers,
+    body: JSON.stringify(payload),
   });
 
   const result = await response.json();

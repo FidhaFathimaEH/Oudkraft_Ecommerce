@@ -9,17 +9,55 @@ const apiLimiter = require('./middleware/rateLimiter');
 const sanitize = require('./middleware/sanitize');
 const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
+const AppError = require('./utils/appError');
 const { API_PREFIX, HEALTH_PATH } = require('./constants');
 const path = require('path');
 
 const app = express();
 app.set('trust proxy', 1);
-app.use('/images', express.static(path.join(__dirname, '../public/images')));
 app.disable('x-powered-by');
+
+// Security headers applied globally (including static assets)
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
-app.use(cors({ origin: clientUrl, credentials: true }));
+
+// Robust CORS with trailing-slash normalization
+const normalizeOrigin = (url) => (typeof url === 'string' ? url.trim().replace(/\/+$/, '') : '');
+const normalizedClientUrl = normalizeOrigin(clientUrl);
+const allowedOrigins = new Set(
+  [
+    normalizedClientUrl,
+    'https://oudkraft-ecommerce.vercel.app',
+    'https://oudkraft.ae',
+    'http://localhost:5173',
+    'http://localhost:3000',
+  ].filter(Boolean)
+);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+      const normalized = normalizeOrigin(origin);
+      if (allowedOrigins.has(normalized)) {
+        return callback(null, true);
+      }
+      if (nodeEnv !== 'production' && /^http:\/\/localhost(:\d+)?$/.test(normalized)) {
+        return callback(null, true);
+      }
+      return callback(new AppError('Not allowed by CORS', 403));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  })
+);
+
+// Static assets mounted after Helmet & CORS
+app.use('/images', express.static(path.join(__dirname, '../public/images')));
+
 app.use(compression());
 app.use(requestLogger);
 

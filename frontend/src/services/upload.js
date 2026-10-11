@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from '../config/apiConfig';
+import { getAuthToken } from './auth';
 
 /**
  * Upload a single product image file to the backend Cloudinary endpoint.
@@ -8,12 +9,16 @@ import { getApiBaseUrl } from '../config/apiConfig';
  */
 export const uploadProductImage = async (file) => {
   const baseUrl = getApiBaseUrl();
+  const token = getAuthToken();
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
   const formData = new FormData();
   formData.append('image', file);
 
   const res = await fetch(`${baseUrl}/uploads/image`, {
     method: 'POST',
     credentials: 'include',
+    headers,
     // Do NOT set Content-Type header; browser will attach multipart/form-data boundary automatically
     body: formData,
   });
@@ -39,6 +44,9 @@ export const uploadProductImages = async (files) => {
   }
 
   const baseUrl = getApiBaseUrl();
+  const token = getAuthToken();
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
   const formData = new FormData();
 
   Array.from(files).forEach((file) => {
@@ -48,6 +56,7 @@ export const uploadProductImages = async (files) => {
   const res = await fetch(`${baseUrl}/uploads`, {
     method: 'POST',
     credentials: 'include',
+    headers,
     body: formData,
   });
 

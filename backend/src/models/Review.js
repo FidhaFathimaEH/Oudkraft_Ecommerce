@@ -65,10 +65,26 @@ const reviewSchema = new mongoose.Schema(
       min: 0,
     },
 
+    helpfulVotedBy: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+      default: [],
+    },
+
     reported: {
       type: Boolean,
       default: false,
       index: true,
+    },
+
+    reportedBy: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+      default: [],
+    },
+
+    reportCount: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
 
     media: {

@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 
@@ -198,6 +199,8 @@ const createOrder = async (req, res, next) => {
     const order = await Order.create({
       orderNumber: generateOrderNumber(),
 
+      user: req.user ? req.user._id : null,
+
       customer: {
         name: customer.name.trim(),
         email: customer.email.trim().toLowerCase(),
@@ -243,6 +246,48 @@ const createOrder = async (req, res, next) => {
   }
 };
 
+const getMyOrders = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication is required.',
+      });
+    }
+
+    const userEmail = (req.user.email || '').trim().toLowerCase();
+    const userId = req.user._id;
+
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+    const skip = (page - 1) * limit;
+
+    const query = {
+      $or: [
+        ...(userId ? [{ user: userId }] : []),
+        ...(userEmail ? [{ 'customer.email': userEmail }] : []),
+      ],
+    };
+
+    const totalOrders = await Order.countDocuments(query);
+    const orders = await Order.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    return res.status(200).json({
+      success: true,
+      count: orders.length,
+      total: totalOrders,
+      page,
+      totalPages: Math.ceil(totalOrders / limit) || 1,
+      data: orders,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getOrders = async (req, res, next) => {
   try {
     const orders = await Order.find()
@@ -261,13 +306,43 @@ const getOrders = async (req, res, next) => {
 
 const getOrderById = async (req, res, next) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid order ID.',
+      });
+    }
+
+    const order = await Order.findById(id);
 
     if (!order) {
       return res.status(404).json({
         success: false,
         message: 'Order not found.',
       });
+    }
+
+    // Authorization verification:
+    // Admin has full access to inspect any order.
+    // Customers can ONLY view orders belonging to them.
+    if (req.user && req.user.role !== 'admin') {
+      const orderEmail = (order.customer?.email || '').trim().toLowerCase();
+      const userEmail = (req.user.email || '').trim().toLowerCase();
+      const orderUserId = order.user ? order.user.toString() : null;
+      const currentUserId = req.user._id ? req.user._id.toString() : null;
+
+      const isOwner =
+        (orderUserId && currentUserId && orderUserId === currentUserId) ||
+        (orderEmail && userEmail && orderEmail === userEmail);
+
+      if (!isOwner) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. You do not have permission to view this order.',
+        });
+      }
     }
 
     return res.status(200).json({
@@ -328,6 +403,7 @@ const updateOrderStatus = async (req, res, next) => {
 
 module.exports = {
   createOrder,
+  getMyOrders,
   getOrders,
   getOrderById,
   updateOrderStatus,

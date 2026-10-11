@@ -9,6 +9,13 @@ const orderSchema = new mongoose.Schema(
       index: true,
     },
 
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+      index: true,
+    },
+
     customer: {
       name: {
         type: String,

@@ -1,10 +1,16 @@
 import { getApiBaseUrl } from '../config/apiConfig';
+import { getAuthToken } from './auth';
 
 const request = async (endpoint, options = {}) => {
   const baseUrl = getApiBaseUrl();
+  const token = getAuthToken();
+  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
   const response = await fetch(`${baseUrl}${endpoint}`, {
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      ...authHeaders,
       ...options.headers,
     },
     ...options,

@@ -16,7 +16,7 @@ const cookieOptions = (token) => ({
 const sendAuthenticated = (res, statusCode, user, message) => {
   const token = createToken(user._id);
   res.cookie('accessToken', token, cookieOptions(token));
-  return ApiResponse.send(res, statusCode, { user: user.toSafeObject() }, message);
+  return ApiResponse.send(res, statusCode, { user: user.toSafeObject(), token }, message);
 };
 
 class AuthController {

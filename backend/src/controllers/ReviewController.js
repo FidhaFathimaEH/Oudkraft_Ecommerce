@@ -186,21 +186,11 @@ const createReview = async (req, res, next) => {
 /*
  * PATCH /api/v1/reviews/:id/helpful
  *
- * Increase helpful count.
+ * Increase helpful count for authenticated users (once per user).
  */
 const markHelpful = async (req, res, next) => {
   try {
-    const review = await Review.findByIdAndUpdate(
-      req.params.id,
-      {
-        $inc: {
-          helpful: 1,
-        },
-      },
-      {
-        new: true,
-      }
-    );
+    const review = await Review.findById(req.params.id);
 
     if (!review) {
       return res.status(404).json({
@@ -208,6 +198,19 @@ const markHelpful = async (req, res, next) => {
         message: 'Review not found.',
       });
     }
+
+    const userIdStr = req.user._id.toString();
+    if (review.helpfulVotedBy && review.helpfulVotedBy.some((id) => id.toString() === userIdStr)) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already marked this review as helpful.',
+      });
+    }
+
+    review.helpful = (review.helpful || 0) + 1;
+    if (!review.helpfulVotedBy) review.helpfulVotedBy = [];
+    review.helpfulVotedBy.push(req.user._id);
+    await review.save();
 
     return res.status(200).json({
       success: true,
@@ -222,19 +225,12 @@ const markHelpful = async (req, res, next) => {
 /*
  * PATCH /api/v1/reviews/:id/report
  *
- * Report a review.
+ * Report a review safely. Prevents author self-reporting, prevents repeated reports from the same user,
+ * and requires a threshold (5 distinct user reports) before suppressing the review or recalculating ratings.
  */
 const reportReview = async (req, res, next) => {
   try {
-    const review = await Review.findByIdAndUpdate(
-      req.params.id,
-      {
-        reported: true,
-      },
-      {
-        new: true,
-      }
-    );
+    const review = await Review.findById(req.params.id);
 
     if (!review) {
       return res.status(404).json({
@@ -243,7 +239,37 @@ const reportReview = async (req, res, next) => {
       });
     }
 
-    await updateProductRating(review.product);
+    const userIdStr = req.user._id.toString();
+
+    // Prevent reporting one's own review
+    if (review.user && review.user.toString() === userIdStr) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot report your own review.',
+      });
+    }
+
+    // Prevent repeated reports from the same user
+    if (review.reportedBy && review.reportedBy.some((id) => id.toString() === userIdStr)) {
+      return res.status(409).json({
+        success: false,
+        message: 'You have already reported this review.',
+      });
+    }
+
+    if (!review.reportedBy) review.reportedBy = [];
+    review.reportedBy.push(req.user._id);
+    review.reportCount = (review.reportCount || 0) + 1;
+
+    // Threshold-based moderation: only suppress if reported by at least 5 distinct users
+    const REPORT_SUPPRESSION_THRESHOLD = 5;
+    if (review.reportCount >= REPORT_SUPPRESSION_THRESHOLD) {
+      review.reported = true;
+      await review.save();
+      await updateProductRating(review.product);
+    } else {
+      await review.save();
+    }
 
     return res.status(200).json({
       success: true,

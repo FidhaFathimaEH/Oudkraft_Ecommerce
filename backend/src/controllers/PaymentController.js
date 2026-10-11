@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Order = require('../models/Order');
+const User = require('../models/User');
 const { getStripe, isStripeConfigured } = require('../config/stripe');
 const { clientUrl, stripe: stripeConfig } = require('../config/env');
 const { resolveOrderItemsAndAmounts } = require('./OrderController');
@@ -64,6 +65,47 @@ const createCheckoutSession = async (req, res, next) => {
           success: false,
           message: 'Order payment method must be card for online checkout.',
         });
+      }
+
+      // Authorization verification:
+      if (req.user) {
+        // Authenticated user: Admin has full legitimate access.
+        // Customer MUST own the order (matching order.customer.email).
+        if (req.user.role !== 'admin') {
+          const orderEmail = (order.customer?.email || '').trim().toLowerCase();
+          const userEmail = (req.user.email || '').trim().toLowerCase();
+          if (!orderEmail || orderEmail !== userEmail) {
+            return res.status(403).json({
+              success: false,
+              message: 'Access denied. You do not have permission to pay for this order.',
+            });
+          }
+        }
+      } else {
+        // Unauthenticated request:
+        // 1. If the order was placed for a registered customer account, require authentication
+        const isRegisteredCustomer = await User.exists({ email: order.customer.email.toLowerCase() });
+        if (isRegisteredCustomer) {
+          return res.status(401).json({
+            success: false,
+            message: 'Authentication is required to access this order.',
+          });
+        }
+
+        // 2. For guest orders, verify that caller provides the matching customer email proof
+        const suppliedEmail = (
+          req.body.customerEmail ||
+          req.body.email ||
+          req.body.customer?.email ||
+          ''
+        ).trim().toLowerCase();
+
+        if (!suppliedEmail || suppliedEmail !== order.customer.email.toLowerCase()) {
+          return res.status(403).json({
+            success: false,
+            message: 'Access denied. Valid customer email verification is required for this guest order.',
+          });
+        }
       }
     } else if (items && Array.isArray(items) && items.length > 0) {
       if (!customer?.name || !customer?.email || !customer?.phone) {

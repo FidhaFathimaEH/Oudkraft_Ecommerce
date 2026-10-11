@@ -10,7 +10,7 @@ const getToken = (req) => {
   return scheme === 'Bearer' ? token : null;
 };
 
-module.exports = asyncHandler(async (req, res, next) => {
+const auth = asyncHandler(async (req, res, next) => {
   const token = getToken(req);
   if (!token) throw new AppError('Authentication is required', 401);
 
@@ -29,3 +29,24 @@ module.exports = asyncHandler(async (req, res, next) => {
   req.user = user;
   next();
 });
+
+const optionalAuth = asyncHandler(async (req, res, next) => {
+  const token = getToken(req);
+  if (!token) return next();
+
+  try {
+    const payload = jwt.verify(token, jwtSecret);
+    const user = await User.findById(payload.sub).select('+role +isActive +passwordChangedAt');
+    if (user && user.isActive) {
+      if (!user.passwordChangedAt || payload.iat >= Math.floor(user.passwordChangedAt.getTime() / 1000)) {
+        req.user = user;
+      }
+    }
+  } catch {
+    // If token is invalid/expired on an optional route, proceed without req.user
+  }
+  next();
+});
+
+auth.optionalAuth = optionalAuth;
+module.exports = auth;

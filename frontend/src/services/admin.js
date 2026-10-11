@@ -1,10 +1,14 @@
 import { getApiBaseUrl } from '../config/apiConfig';
+import { getAuthToken, setAuthToken } from './auth';
 
 const req = async (endpoint, options = {}) => {
   const baseUrl = getApiBaseUrl();
+  const token = getAuthToken();
+  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
   const res = await fetch(`${baseUrl}${endpoint}`, {
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...options.headers },
+    headers: { 'Content-Type': 'application/json', ...authHeaders, ...options.headers },
     ...options,
   });
   const data = await res.json();
@@ -13,11 +17,20 @@ const req = async (endpoint, options = {}) => {
 };
 
 // Auth
-export const adminLogin = (email, password) =>
-  req('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+export const adminLogin = async (email, password) => {
+  const data = await req('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+  const token = data?.data?.token || data?.token;
+  if (token) setAuthToken(token);
+  return data;
+};
 
-export const adminLogout = () =>
-  req('/auth/logout', { method: 'POST' });
+export const adminLogout = async () => {
+  try {
+    return await req('/auth/logout', { method: 'POST' });
+  } finally {
+    setAuthToken(null);
+  }
+};
 
 export const getMe = () => req('/auth/me');
 
