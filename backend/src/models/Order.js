@@ -9,6 +9,13 @@ const orderSchema = new mongoose.Schema(
       index: true,
     },
 
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+      index: true,
+    },
+
     customer: {
       name: {
         type: String,
@@ -158,6 +165,28 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: ['pending', 'paid', 'failed', 'refunded'],
       default: 'pending',
+    },
+
+    stripeSessionId: {
+      type: String,
+      sparse: true,
+      index: true,
+    },
+
+    stripePaymentIntentId: {
+      type: String,
+      sparse: true,
+      index: true,
+    },
+
+    currency: {
+      type: String,
+      default: 'aed',
+      lowercase: true,
+    },
+
+    paidAt: {
+      type: Date,
     },
 
     status: {

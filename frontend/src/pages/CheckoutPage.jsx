@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { getCart, saveCart } from '../services/cart';
 import { deliveryConfig } from '../config/businessConfig';
-import { paymentMethods } from '../services/payments';
+import { paymentMethods, createCheckoutSession } from '../services/payments';
 import { getApiBaseUrl } from '../config/apiConfig';
+import { getAuthToken } from '../services/auth';
 
 export const CheckoutPage = () => {
   const [cartItems, setCartItems] = useState(() => getCart());
@@ -180,10 +181,15 @@ export const CheckoutPage = () => {
       };
 
       const baseUrl = getApiBaseUrl();
+      const token = getAuthToken();
+      const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
       const response = await fetch(`${baseUrl}/orders`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          ...authHeaders,
         },
         body: JSON.stringify(payload),
       });
@@ -204,7 +210,30 @@ export const CheckoutPage = () => {
       }
 
       const createdOrder = result.data;
+      const normalizedMethod = normalizePaymentMethod(form.paymentMethod);
 
+      if (normalizedMethod === 'card') {
+        // Save pending order reference for checkout success verification
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          window.sessionStorage.setItem(
+            'oudkraft_pending_order',
+            JSON.stringify({
+              orderId: createdOrder._id,
+              orderNumber: createdOrder.orderNumber,
+              total: createdOrder.total,
+            })
+          );
+        }
+
+        // Initialize Stripe Checkout session with customer email verification
+        const sessionData = await createCheckoutSession(createdOrder._id, form.email);
+
+        // Redirect browser to Stripe-hosted Checkout
+        window.location.href = sessionData.sessionUrl;
+        return;
+      }
+
+      // COD Flow
       saveCart([]);
       setCartItems([]);
       setOrderSuccess(createdOrder);
@@ -595,19 +624,23 @@ export const CheckoutPage = () => {
                 </div>
               </div>
 
-              {/* Place Order */}
+              {/* Place Order / Pay with Card */}
               <button
                 type="submit"
                 disabled={submitting}
-                className={`rounded-full px-6 py-3 font-semibold text-white ${
+                className={`rounded-full px-6 py-3 font-semibold text-white transition-colors ${
                   submitting
                     ? 'cursor-not-allowed bg-[#6d8079]'
                     : 'bg-[#0D3B2E] hover:bg-[#123F34]'
                 }`}
               >
                 {submitting
-                  ? 'Placing order...'
-                  : 'Place order'}
+                  ? normalizePaymentMethod(form.paymentMethod) === 'card'
+                    ? 'Connecting to secure payment...'
+                    : 'Placing order...'
+                  : normalizePaymentMethod(form.paymentMethod) === 'card'
+                    ? 'Pay with Card'
+                    : 'Place Order'}
               </button>
             </form>
 

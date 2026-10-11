@@ -4,6 +4,8 @@ export * from './ProductPage';
 export * from './CartPage';
 export * from './WishlistPage';
 export * from './CheckoutPage';
+export * from './CheckoutSuccessPage';
+export * from './CheckoutCancelPage';
 export * from './GiftStudioPage';
 export * from './AboutPage';
 export * from './ContactPage';
