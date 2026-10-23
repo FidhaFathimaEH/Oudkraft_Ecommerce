@@ -13,6 +13,9 @@ import {
   Clock,
   Loader2,
   FileText,
+  Download,
+  MessageCircle,
+  ExternalLink,
 } from 'lucide-react';
 
 const ORDER_STATUSES = [
@@ -88,6 +91,8 @@ export const OrderDetailsModal = ({
   onClose,
   onStatusChange,
   isUpdatingStatus,
+  onDownloadInvoice,
+  isDownloadingInvoice = false,
 }) => {
   if (!isOpen || !order) return null;
 
@@ -406,15 +411,46 @@ export const OrderDetailsModal = ({
             </div>
           </div>
 
-          {/* Footer Action */}
-          <div className="flex items-center justify-end border-t border-[#e3d9c4] bg-white px-6 py-4 sm:px-8">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-full border border-[#0D3B2E] bg-[#0D3B2E] px-6 py-2.5 text-xs font-bold uppercase tracking-[0.15em] text-white hover:bg-[#123F34] transition-colors shadow-sm"
-            >
-              Close Details
-            </button>
+          {/* Footer Actions */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#e3d9c4] bg-white px-6 py-4 sm:px-8">
+            <div className="flex items-center gap-2">
+              {order.customer?.phone ? (
+                <a
+                  href={`https://wa.me/${String(order.customer.phone).replace(/\D/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#25D366] bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition-colors"
+                >
+                  <MessageCircle className="h-4 w-4 text-[#25D366]" />
+                  Chat on WhatsApp
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              ) : null}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => onDownloadInvoice && onDownloadInvoice(order)}
+                disabled={isDownloadingInvoice || order.status === 'Cancelled'}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#C6A15B] px-5 py-2.5 text-xs font-bold uppercase tracking-[0.1em] text-[#0D3B2E] hover:bg-[#d4b570] transition-colors shadow-sm disabled:opacity-50"
+              >
+                {isDownloadingInvoice ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                Generate PDF Invoice
+              </button>
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-full border border-[#0D3B2E] bg-[#0D3B2E] px-6 py-2.5 text-xs font-bold uppercase tracking-[0.15em] text-white hover:bg-[#123F34] transition-colors shadow-sm"
+              >
+                Close Details
+              </button>
+            </div>
           </div>
         </motion.div>
       </div>
@@ -428,4 +464,6 @@ OrderDetailsModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   onStatusChange: PropTypes.func,
   isUpdatingStatus: PropTypes.bool,
+  onDownloadInvoice: PropTypes.func,
+  isDownloadingInvoice: PropTypes.bool,
 };

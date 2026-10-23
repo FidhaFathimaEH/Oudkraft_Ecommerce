@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { MessageCircle, Star, ThumbsUp, Flag, ImageIcon, Video, Sparkles } from 'lucide-react';
+import { Star, ThumbsUp, Flag, ImageIcon, Video } from 'lucide-react';
 import { getProductReviews } from '../services/reviews';
 
 const sortOptions = [
@@ -14,39 +14,27 @@ const ratingFilters = [5, 4, 3, 2, 1];
 
 export const ReviewsSection = ({ product }) => {
   const [sortBy, setSortBy] = useState('newest');
-const [ratingFilter, setRatingFilter] = useState('all');
-const [reviews, setReviews] = useState([]);
-const [loading, setLoading] = useState(true);
-const [error, setError] = useState('');
+  const [ratingFilter, setRatingFilter] = useState('all');
+  const [reviews, setReviews] = useState([]);
 
-useEffect(() => {
-  let cancelled = false;
+  useEffect(() => {
+    let cancelled = false;
 
-  const loadReviews = async () => {
-    try {
-      setLoading(true);
-      setError('');
+    const loadReviews = async () => {
+      try {
+        const productId = product._id || product.id;
+        const data = await getProductReviews(productId);
 
-      const productId = product._id || product.id;
-
-      const data = await getProductReviews(productId);
-
-      if (!cancelled) {
-        setReviews(Array.isArray(data) ? data : []);
+        if (!cancelled) {
+          setReviews(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        console.error('Failed to load reviews:', err);
+        if (!cancelled) {
+          setReviews([]);
+        }
       }
-    } catch (err) {
-      console.error('Failed to load reviews:', err);
-
-      if (!cancelled) {
-        setError(err.message || 'Failed to load reviews');
-        setReviews([]);
-      }
-    } finally {
-      if (!cancelled) {
-        setLoading(false);
-      }
-    }
-  };
+    };
 
   loadReviews();
 

@@ -15,9 +15,13 @@ import {
   Calendar,
   CreditCard,
   Inbox,
+  FileText,
+  Plus,
 } from 'lucide-react';
-import { getAdminOrders, updateOrderStatus } from '../../services/admin';
+import { getAdminOrders, updateOrderStatus, downloadOrderInvoice } from '../../services/admin';
 import { OrderDetailsModal } from '../../components/admin/OrderDetailsModal';
+import { WhatsAppHandoffModal } from '../../components/admin/WhatsAppHandoffModal';
+import { RecordWhatsAppOrderModal } from '../../components/admin/RecordWhatsAppOrderModal';
 
 const ORDER_STATUSES = [
   'All',
@@ -117,6 +121,17 @@ export const AdminOrdersPage = () => {
   // Toast feedback
   const [feedback, setFeedback] = useState(null);
 
+  // PDF Invoice generation state
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = useState(null);
+  const [handoffModal, setHandoffModal] = useState({
+    isOpen: false,
+    order: null,
+    filename: '',
+  });
+
+  // Record Confirmed WhatsApp Order Modal
+  const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
+
   const [, startTransition] = useTransition();
 
   // Debounce search input (350ms)
@@ -201,6 +216,68 @@ export const AdminOrdersPage = () => {
     setIsDetailsOpen(true);
   };
 
+  // Download PDF Invoice
+  const handleDownloadInvoice = async (order) => {
+    if (!order?._id) return;
+
+    if (order.status?.toLowerCase() === 'cancelled') {
+      setFeedback({
+        type: 'error',
+        message: 'Cannot generate an invoice for a cancelled order.',
+      });
+      return;
+    }
+
+    try {
+      setDownloadingInvoiceId(order._id);
+      const filename = await downloadOrderInvoice(order._id, order.orderNumber || order._id);
+
+      // Update local state with generated invoice flag/timestamp if not already present
+      setOrders((prev) =>
+        prev.map((ord) =>
+          ord._id === order._id
+            ? {
+                ...ord,
+                invoiceNumber:
+                  ord.invoiceNumber ||
+                  `INV-${new Date().getFullYear()}-${ord._id.slice(-8).toUpperCase()}`,
+                invoiceIssuedAt: ord.invoiceIssuedAt || new Date().toISOString(),
+              }
+            : ord
+        )
+      );
+
+      if (selectedOrder && selectedOrder._id === order._id) {
+        setSelectedOrder((prev) => ({
+          ...prev,
+          invoiceNumber:
+            prev.invoiceNumber ||
+            `INV-${new Date().getFullYear()}-${prev._id.slice(-8).toUpperCase()}`,
+          invoiceIssuedAt: prev.invoiceIssuedAt || new Date().toISOString(),
+        }));
+      }
+
+      setFeedback({
+        type: 'success',
+        message: `Invoice downloaded: ${filename}`,
+      });
+
+      // Open WhatsApp handoff instruction modal
+      setHandoffModal({
+        isOpen: true,
+        order,
+        filename,
+      });
+    } catch (err) {
+      setFeedback({
+        type: 'error',
+        message: err?.message || 'Failed to generate PDF invoice. Please try again.',
+      });
+    } finally {
+      setDownloadingInvoiceId(null);
+    }
+  };
+
   // Filtered & Searched orders
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
@@ -263,7 +340,17 @@ export const AdminOrdersPage = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsRecordModalOpen(true)}
+            title="Record a confirmed WhatsApp order"
+            className="inline-flex items-center gap-2 rounded-full bg-[#0D3B2E] px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-white shadow-sm hover:bg-[#123F34] transition-colors active:scale-95"
+          >
+            <Plus className="h-3.5 w-3.5 text-[#C6A15B]" />
+            <span>Record WhatsApp Order</span>
+          </button>
+
           <button
             type="button"
             onClick={loadOrders}
@@ -551,15 +638,39 @@ export const AdminOrdersPage = () => {
 
                           {/* Actions */}
                           <td className="py-4 pl-3 pr-6 text-right whitespace-nowrap">
-                            <button
-                              type="button"
-                              onClick={() => handleOpenDetails(order)}
-                              title="View Order Details"
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-[#e3d9c4] px-2.5 py-1.5 text-xs font-semibold text-[#0D3B2E] hover:bg-[#0D3B2E] hover:text-white transition-colors"
-                            >
-                              <Eye className="h-3.5 w-3.5" />
-                              <span className="hidden md:inline">Details</span>
-                            </button>
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadInvoice(order)}
+                                disabled={
+                                  downloadingInvoiceId === order._id ||
+                                  order.status?.toLowerCase() === 'cancelled'
+                                }
+                                title={
+                                  order.status?.toLowerCase() === 'cancelled'
+                                    ? 'Invoices cannot be generated for cancelled orders'
+                                    : 'Generate & Download PDF Invoice'
+                                }
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-[#C6A15B]/60 bg-[#f8f3ea] px-2.5 py-1.5 text-xs font-semibold text-[#0D3B2E] hover:bg-[#C6A15B] hover:text-[#0D3B2E] transition-colors disabled:opacity-40"
+                              >
+                                {downloadingInvoiceId === order._id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#0D3B2E]" />
+                                ) : (
+                                  <FileText className="h-3.5 w-3.5 text-[#0D3B2E]" />
+                                )}
+                                <span className="hidden sm:inline">Invoice</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleOpenDetails(order)}
+                                title="View Order Details"
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-[#e3d9c4] bg-white px-2.5 py-1.5 text-xs font-semibold text-[#0D3B2E] hover:bg-[#0D3B2E] hover:text-white transition-colors"
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                                <span className="hidden md:inline">Details</span>
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -614,6 +725,29 @@ export const AdminOrdersPage = () => {
         }}
         onStatusChange={handleStatusChange}
         isUpdatingStatus={updatingOrderId === selectedOrder?._id}
+        onDownloadInvoice={handleDownloadInvoice}
+        isDownloadingInvoice={downloadingInvoiceId === selectedOrder?._id}
+      />
+
+      {/* WhatsApp Handoff Instructions Modal */}
+      <WhatsAppHandoffModal
+        isOpen={handoffModal.isOpen}
+        onClose={() => setHandoffModal({ isOpen: false, order: null, filename: '' })}
+        order={handoffModal.order}
+        filename={handoffModal.filename}
+      />
+
+      {/* Record Confirmed WhatsApp Order Modal */}
+      <RecordWhatsAppOrderModal
+        isOpen={isRecordModalOpen}
+        onClose={() => setIsRecordModalOpen(false)}
+        onOrderCreated={(newOrder) => {
+          loadOrders();
+          setFeedback({
+            type: 'success',
+            message: `Confirmed WhatsApp order #${newOrder?.orderNumber || 'created'} recorded successfully.`,
+          });
+        }}
       />
     </div>
   );

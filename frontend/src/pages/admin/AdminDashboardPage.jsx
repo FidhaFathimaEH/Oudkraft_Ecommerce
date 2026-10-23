@@ -541,9 +541,17 @@ export const AdminDashboardPage = () => {
                   Showing the latest 10 customer orders placed across the UAE.
                 </p>
               </div>
-              <span className="self-start sm:self-auto rounded-full border border-[#e3d9c4] bg-[#F8F4EC] px-3 py-1 text-xs font-medium text-[#0D3B2E]">
-                {recentOrders.length} {recentOrders.length === 1 ? 'Order' : 'Orders'} Recorded
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full border border-[#e3d9c4] bg-[#F8F4EC] px-3 py-1 text-xs font-medium text-[#0D3B2E]">
+                  {recentOrders.length} {recentOrders.length === 1 ? 'Order' : 'Orders'} Recorded
+                </span>
+                <Link
+                  to="/admin/orders"
+                  className="rounded-full border border-[#C6A15B]/50 bg-[#0D3B2E] px-3.5 py-1 text-xs font-semibold text-white hover:bg-[#123F34] transition-colors"
+                >
+                  Manage &amp; Invoices &rarr;
+                </Link>
+              </div>
             </div>
 
             {/* Empty State */}

@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { Layout } from '../components/Layout';
 import { businessConfig } from '../config/businessConfig';
+import { isWhatsAppConfigured, getCleanWhatsAppNumber } from '../utils/whatsappOrder';
 import { MessageCircle, Mail, Camera, MapPin } from 'lucide-react';
 
 export const ContactPage = () => {
   const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '' });
+  const isConfigured = isWhatsAppConfigured();
+  const whatsAppDisplay = isConfigured ? `+${getCleanWhatsAppNumber()}` : 'Available on request (hello@oudkraft.ae)';
 
   return (
     <Layout>
@@ -15,7 +18,7 @@ export const ContactPage = () => {
             <h1 className="mt-3 font-serif text-3xl">Let us help you find the right scent</h1>
             <p className="mt-4 max-w-md text-[#efe4d0]">Our concierge team is ready to assist with gifting, fragrance advice and private order requests throughout Abu Dhabi.</p>
             <div className="mt-8 space-y-4 text-[#efe4d0]">
-              <div className="flex items-center gap-3"><MessageCircle size={18} className="text-[#C6A15B]" /><span>WhatsApp: {businessConfig.whatsapp}</span></div>
+              <div className="flex items-center gap-3"><MessageCircle size={18} className="text-[#C6A15B]" /><span>WhatsApp: {whatsAppDisplay}</span></div>
               <div className="flex items-center gap-3"><Mail size={18} className="text-[#C6A15B]" /><span>Email: {businessConfig.email}</span></div>
               <div className="flex items-center gap-3"><Camera size={18} className="text-[#C6A15B]" /><span>Instagram: {businessConfig.instagram}</span></div>
               <div className="flex items-center gap-3"><MapPin size={18} className="text-[#C6A15B]" /><span>Location: {businessConfig.location}</span></div>

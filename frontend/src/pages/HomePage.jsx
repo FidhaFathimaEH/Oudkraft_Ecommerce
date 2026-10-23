@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, ArrowUpRight, Gift, ShieldCheck, Sparkles, Truck, Crown, Leaf, Clock3, BadgeCheck, Gem, Quote } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Gift, ShieldCheck, Sparkles, Truck, Crown, Clock3, BadgeCheck, Gem, Quote } from 'lucide-react';
 import { businessConfig } from '../config/businessConfig';
 import { Layout } from '../components/Layout';
 import { ProductCard } from '../components/ProductCard';
@@ -132,11 +132,11 @@ export const HomePage = () => {
               <p className="text-[10px] uppercase tracking-[.3em] text-[#dfbd7f]">The signature</p>
               <p className="mt-2 font-serif text-2xl leading-tight">Oud Kraft Mari</p>
               <Link
-  to={featuredProduct ? `/product/${featuredProduct.slug}` : '/shop'}
-  className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-[#e0be7f]"
->
-  Discover the scent <ArrowRight size={14} />
-</Link>
+                to={featuredProduct ? `/product/${featuredProduct.slug}` : '/shop'}
+                className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-[#e0be7f]"
+              >
+                Discover the scent <ArrowRight size={14} />
+              </Link>
             </div>
             <p className="absolute right-0 top-1/2 hidden -translate-y-1/2 translate-x-[38%] rotate-90 text-[10px] uppercase tracking-[.45em] text-[#d8b87a] xl:block">Est. in Abu Dhabi · 2026</p>
           </motion.div>

@@ -170,7 +170,7 @@ export const ScentQuiz = () => {
                 ) : (
                   <div>
                     <p className="mt-3 text-sm text-[#5b5b5b]">
-                      We couldn't load the fragrance collection right now.
+                      We couldn&apos;t load the fragrance collection right now.
                     </p>
 
                     <button

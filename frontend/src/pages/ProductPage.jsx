@@ -27,7 +27,13 @@ import {
   getProducts,
 } from '../services/products';
 
-import { businessConfig, deliveryConfig } from '../config/businessConfig';
+import { deliveryConfig } from '../config/businessConfig';
+import {
+  formatSingleProductOrderMessage,
+  buildWhatsAppUrl,
+  isWhatsAppConfigured,
+} from '../utils/whatsappOrder';
+import { WhatsAppOrderNoticeModal } from '../components/WhatsAppOrderNoticeModal';
 import { getCart, saveCart, updateCartItem } from '../services/cart';
 import {
   isWishlisted,
@@ -50,6 +56,11 @@ export const ProductPage = () => {
   const [selectedSize, setSelectedSize] = useState('100 ml');
   const [message, setMessage] = useState('');
   const [saved, setSaved] = useState(false);
+  const [noticeModal, setNoticeModal] = useState({
+    isOpen: false,
+    type: 'prepared',
+    url: '',
+  });
 
   const recentlyViewedSlugs = useRecentlyViewed(product?.slug);
 
@@ -334,9 +345,6 @@ export const ProductPage = () => {
     ? product.baseNotes
     : [];
 
-  const images = Array.isArray(product.images)
-    ? product.images
-    : [];
 
   /*
    * Add product to cart.
@@ -372,13 +380,44 @@ export const ProductPage = () => {
   };
 
   /*
-   * WhatsApp buy-now link.
+   * WhatsApp Order handler with prefilled details.
    */
-  const whatsappNumber = businessConfig?.whatsapp || '';
+  const handleWhatsAppOrder = () => {
+    if (!product) return;
 
-  const whatsappUrl = whatsappNumber
-    ? `https://wa.me/${whatsappNumber}`
-    : '#';
+    if (!isWhatsAppConfigured()) {
+      setNoticeModal({
+        isOpen: true,
+        type: 'missing',
+        url: '',
+      });
+      return;
+    }
+
+    const messageText = formatSingleProductOrderMessage({
+      product,
+      size: selectedSize || product.size || '100 ml',
+      quantity,
+    });
+
+    const url = buildWhatsAppUrl(messageText);
+    if (url) {
+      if (typeof window !== 'undefined') {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+      setNoticeModal({
+        isOpen: true,
+        type: 'prepared',
+        url,
+      });
+    } else {
+      setNoticeModal({
+        isOpen: true,
+        type: 'missing',
+        url: '',
+      });
+    }
+  };
 
   return (
     <Layout>
@@ -423,11 +462,10 @@ export const ProductPage = () => {
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={toggleWishlist}
-                  className={`rounded-full border p-3 ${
-                    saved
+                  className={`rounded-full border p-3 ${saved
                       ? 'border-[#C6A15B] bg-[#F8F4EC] text-[#C6A15B]'
                       : 'border-[#e3d9c4] text-[#0D3B2E]'
-                  }`}
+                    }`}
                   aria-label="Add to wishlist"
                 >
                   <Heart
@@ -527,11 +565,10 @@ export const ProductPage = () => {
                     onClick={() =>
                       setSelectedSize(size)
                     }
-                    className={`rounded-full px-4 py-2 text-sm ${
-                      selectedSize === size
+                    className={`rounded-full px-4 py-2 text-sm ${selectedSize === size
                         ? 'bg-[#0D3B2E] text-white'
                         : 'bg-[#F8F4EC] text-[#0D3B2E]'
-                    }`}
+                      }`}
                   >
                     {size}
                   </motion.button>
@@ -583,17 +620,22 @@ export const ProductPage = () => {
                 </motion.button>
               </div>
 
-              <motion.a
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                href={whatsappUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-center gap-2 rounded-full border border-[#e3d9c4] px-5 py-3 font-semibold text-[#0D3B2E] sm:w-auto"
-              >
-                <MessageCircle size={16} />
-                Buy Now
-              </motion.a>
+              <div className="flex flex-col gap-2.5">
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleWhatsAppOrder}
+                  className="flex items-center justify-center gap-2 rounded-full bg-[#C6A15B] px-5 py-3.5 font-semibold text-[#0D3B2E] transition hover:bg-[#d4b570] shadow-sm sm:w-auto"
+                >
+                  <MessageCircle size={18} className="text-[#0D3B2E]" />
+                  Order on WhatsApp
+                </motion.button>
+
+                <p className="rounded-[14px] border border-[#e3d9c4] bg-[#F8F4EC] p-3 text-xs leading-5 text-[#0D3B2E]">
+                  <strong>Note:</strong> Your order is not confirmed until Oud Kraft replies on WhatsApp. The business will confirm availability, delivery details and Cash on Delivery manually.
+                </p>
+              </div>
             </div>
 
             {message ? (
@@ -867,6 +909,13 @@ export const ProductPage = () => {
           )}
         </div>
       </section>
+
+      <WhatsAppOrderNoticeModal
+        isOpen={noticeModal.isOpen}
+        onClose={() => setNoticeModal((m) => ({ ...m, isOpen: false }))}
+        type={noticeModal.type}
+        whatsAppUrl={noticeModal.url}
+      />
     </Layout>
   );
 };
