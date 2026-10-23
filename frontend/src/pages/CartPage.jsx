@@ -10,10 +10,22 @@ import {
   ArrowRight,
   ShoppingBag,
   ArrowLeft,
+  MessageCircle,
 } from 'lucide-react';
+import {
+  formatCartOrderMessage,
+  buildWhatsAppUrl,
+  isWhatsAppConfigured,
+} from '../utils/whatsappOrder';
+import { WhatsAppOrderNoticeModal } from '../components/WhatsAppOrderNoticeModal';
 
 export const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
+  const [noticeModal, setNoticeModal] = useState({
+    isOpen: false,
+    type: 'prepared',
+    url: '',
+  });
 
   useEffect(() => {
     setCartItems(getCart());
@@ -79,6 +91,44 @@ export const CartPage = () => {
   const clearCart = () => {
     setCartItems([]);
     saveCart([]);
+  };
+
+  const handleWhatsAppCartOrder = () => {
+    if (cartItems.length === 0) return;
+
+    if (!isWhatsAppConfigured()) {
+      setNoticeModal({
+        isOpen: true,
+        type: 'missing',
+        url: '',
+      });
+      return;
+    }
+
+    const messageText = formatCartOrderMessage({
+      cartItems,
+      subtotal,
+      deliveryFee: delivery,
+      total,
+    });
+
+    const url = buildWhatsAppUrl(messageText);
+    if (url) {
+      if (typeof window !== 'undefined') {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+      setNoticeModal({
+        isOpen: true,
+        type: 'prepared',
+        url,
+      });
+    } else {
+      setNoticeModal({
+        isOpen: true,
+        type: 'missing',
+        url: '',
+      });
+    }
   };
 
   return (
@@ -262,17 +312,20 @@ export const CartPage = () => {
                 </div>
               </div>
 
-              <Link
-                to="/checkout"
-                className="mt-8 flex items-center justify-center gap-2 rounded-full bg-[#C6A15B] px-5 py-3 font-semibold text-[#0D3B2E] transition hover:bg-[#d4b570]"
-              >
-                Proceed to checkout
-                <ArrowRight size={16} />
-              </Link>
+              <div className="mt-8 flex flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={handleWhatsAppCartOrder}
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-[#C6A15B] px-5 py-3.5 font-semibold text-[#0D3B2E] transition hover:bg-[#d4b570] shadow-md active:scale-98"
+                >
+                  <MessageCircle size={18} className="text-[#0D3B2E]" />
+                  Order on WhatsApp
+                </button>
 
-              <p className="mt-4 text-center text-xs leading-5 text-[#d8d0c0]">
-                Secure checkout and elegant gift-ready packaging available.
-              </p>
+                <div className="rounded-[16px] bg-white/10 p-3 text-center text-xs leading-5 text-[#efe4d0]">
+                  <strong>Note:</strong> Your order is not confirmed until Oud Kraft replies on WhatsApp. The business will confirm availability, delivery details and Cash on Delivery manually.
+                </div>
+              </div>
             </div>
           </div>
         ) : (
@@ -300,6 +353,13 @@ export const CartPage = () => {
           </div>
         )}
       </section>
+
+      <WhatsAppOrderNoticeModal
+        isOpen={noticeModal.isOpen}
+        onClose={() => setNoticeModal((m) => ({ ...m, isOpen: false }))}
+        type={noticeModal.type}
+        whatsAppUrl={noticeModal.url}
+      />
     </Layout>
   );
 };

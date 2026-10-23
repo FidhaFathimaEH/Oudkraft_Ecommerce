@@ -1,12 +1,9 @@
 import { getApiBaseUrl } from '../config/apiConfig';
 import { getAuthToken } from './auth';
 
+// Online Stripe payments are temporarily disabled for initial launch.
+// All helper functions and Stripe integration code are preserved below for future activation.
 export const paymentMethods = [
-  {
-    id: 'card',
-    label: 'Credit / Debit Card',
-    description: 'Pay securely via Stripe Checkout (Visa, Mastercard, Amex, Apple Pay).',
-  },
   {
     id: 'cod',
     label: 'Cash on Delivery',

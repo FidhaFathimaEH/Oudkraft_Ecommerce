@@ -2,7 +2,6 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const request = require('supertest');
 const { MongoMemoryServer } = require('mongodb-memory-server');
-const mongoose = require('mongoose');
 
 test('Phase 2 Security Remediation: comprehensive regression verification', async (t) => {
   const mongo = await MongoMemoryServer.create();
@@ -27,7 +26,7 @@ test('Phase 2 Security Remediation: comprehensive regression verification', asyn
   stripeConfigModule.setStripeClient({
     checkout: {
       sessions: {
-        create: async (params) => ({
+        create: async (_params) => ({
           id: 'cs_test_security_mock_123',
           url: 'https://checkout.stripe.com/pay/cs_test_security_mock_123',
           payment_intent: 'pi_test_security_mock_123',
@@ -62,7 +61,7 @@ test('Phase 2 Security Remediation: comprehensive regression verification', asyn
     isActive: true,
   });
 
-  const adminUser = await User.create({
+  await User.create({
     name: 'Admin User',
     email: 'admin@example.com',
     phone: '+971503333333',

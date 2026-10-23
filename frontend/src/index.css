@@ -23,10 +23,31 @@ body {
   color: #171311;
 }
 
-* { box-sizing: border-box; }
-a { color: inherit; text-decoration: none; }
-button, input, textarea, select { font: inherit; }
-::selection { background: #c6a15b; color: #fff; }
-#root { min-height: 100vh; }
+* {
+  box-sizing: border-box;
+}
 
-.font-serif { font-family: 'Cormorant Garamond', serif; }
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: #c6a15b;
+  color: #fff;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.font-serif {
+  font-family: 'Cormorant Garamond', serif;
+}

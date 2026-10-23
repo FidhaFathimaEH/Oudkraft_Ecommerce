@@ -4,12 +4,12 @@ import { MessageCircle, Search, ThumbsUp } from 'lucide-react';
 
 export const QuestionsSection = ({ product }) => {
   const [query, setQuery] = useState('');
-  const questions = product.questions || [];
 
   const filteredQuestions = useMemo(() => {
-    if (!query.trim()) return questions;
-    return questions.filter((item) => `${item.question} ${item.answer}`.toLowerCase().includes(query.toLowerCase()));
-  }, [questions, query]);
+    const list = product?.questions || [];
+    if (!query.trim()) return list;
+    return list.filter((item) => `${item.question} ${item.answer}`.toLowerCase().includes(query.toLowerCase()));
+  }, [product?.questions, query]);
 
   return (
     <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">

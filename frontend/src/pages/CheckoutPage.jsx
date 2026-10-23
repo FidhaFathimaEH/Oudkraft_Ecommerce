@@ -1,14 +1,18 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { MessageCircle } from 'lucide-react';
 import { Layout } from '../components/Layout';
-import { getCart, saveCart } from '../services/cart';
+import { getCart } from '../services/cart';
 import { deliveryConfig } from '../config/businessConfig';
-import { paymentMethods, createCheckoutSession } from '../services/payments';
-import { getApiBaseUrl } from '../config/apiConfig';
-import { getAuthToken } from '../services/auth';
+import {
+  formatCartOrderMessage,
+  buildWhatsAppUrl,
+  isWhatsAppConfigured,
+} from '../utils/whatsappOrder';
+import { WhatsAppOrderNoticeModal } from '../components/WhatsAppOrderNoticeModal';
 
 export const CheckoutPage = () => {
-  const [cartItems, setCartItems] = useState(() => getCart());
+  const [cartItems] = useState(() => getCart());
 
   const [form, setForm] = useState({
     name: '',
@@ -21,12 +25,14 @@ export const CheckoutPage = () => {
     apartment: '',
     landmark: '',
     instructions: '',
-    paymentMethod: 'card',
   });
 
   const [errors, setErrors] = useState({});
-  const [submitting, setSubmitting] = useState(false);
-  const [orderSuccess, setOrderSuccess] = useState(null);
+  const [noticeModal, setNoticeModal] = useState({
+    isOpen: false,
+    type: 'prepared',
+    url: '',
+  });
 
   const subtotal = useMemo(
     () =>
@@ -106,31 +112,15 @@ export const CheckoutPage = () => {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const normalizePaymentMethod = (method) => {
-    if (
-      method === 'cash_on_delivery' ||
-      method === 'cod' ||
-      method === 'cash'
-    ) {
-      return 'cash_on_delivery';
-    }
-
-    return 'card';
-  };
-
-  const createOrder = async (event) => {
-    event.preventDefault();
-
-    if (submitting) {
-      return;
+  const handleWhatsAppCheckout = (event) => {
+    if (event && event.preventDefault) {
+      event.preventDefault();
     }
 
     if (cartItems.length === 0) {
       setErrors({
-        submit:
-          'Your cart is empty. Please add a product before checkout.',
+        submit: 'Your cart is empty. Please add a product before checkout.',
       });
-
       return;
     }
 
@@ -138,193 +128,54 @@ export const CheckoutPage = () => {
       return;
     }
 
-    try {
-      setSubmitting(true);
-
-      const orderItems = cartItems.map((item) => ({
-        product: item._id || item.id,
-        name: item.name,
-        slug: item.slug || '',
-        image: item.images?.[0] || item.image || '',
-        size: item.size || '100 ml',
-        quantity: Number(item.quantity),
-        price: Number(item.price),
-      }));
-
-      const payload = {
-        customer: {
-          name: form.name.trim(),
-          email: form.email.trim(),
-          phone: form.phone.trim(),
-        },
-
-        deliveryAddress: {
-          emirate: form.emirate,
-          area: form.area.trim(),
-          street: form.street.trim(),
-          building: form.building.trim(),
-          apartment: form.apartment.trim(),
-          landmark: form.landmark.trim(),
-          instructions: form.instructions.trim(),
-        },
-
-        items: orderItems,
-
-        subtotal,
-        deliveryFee: delivery,
-        discount: 0,
-        total,
-
-        paymentMethod: normalizePaymentMethod(
-          form.paymentMethod
-        ),
-      };
-
-      const baseUrl = getApiBaseUrl();
-      const token = getAuthToken();
-      const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
-
-      const response = await fetch(`${baseUrl}/orders`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authHeaders,
-        },
-        body: JSON.stringify(payload),
+    if (!isWhatsAppConfigured()) {
+      setNoticeModal({
+        isOpen: true,
+        type: 'missing',
+        url: '',
       });
+      return;
+    }
 
-      const result = await response.json();
+    const messageText = formatCartOrderMessage({
+      cartItems,
+      subtotal,
+      deliveryFee: delivery,
+      total,
+      customer: {
+        name: form.name.trim(),
+        phone: form.phone.trim(),
+        email: form.email.trim(),
+      },
+      deliveryAddress: {
+        emirate: form.emirate,
+        area: form.area.trim(),
+        street: form.street.trim(),
+        building: form.building.trim(),
+        apartment: form.apartment.trim(),
+        landmark: form.landmark.trim(),
+        instructions: form.instructions.trim(),
+      },
+    });
 
-      if (!response.ok) {
-        throw new Error(
-          result.message ||
-            'Unable to create your order. Please try again.'
-        );
+    const url = buildWhatsAppUrl(messageText);
+    if (url) {
+      if (typeof window !== 'undefined') {
+        window.open(url, '_blank', 'noopener,noreferrer');
       }
-
-      if (!result.success || !result.data) {
-        throw new Error(
-          result.message || 'The order could not be created.'
-        );
-      }
-
-      const createdOrder = result.data;
-      const normalizedMethod = normalizePaymentMethod(form.paymentMethod);
-
-      if (normalizedMethod === 'card') {
-        // Save pending order reference for checkout success verification
-        if (typeof window !== 'undefined' && window.sessionStorage) {
-          window.sessionStorage.setItem(
-            'oudkraft_pending_order',
-            JSON.stringify({
-              orderId: createdOrder._id,
-              orderNumber: createdOrder.orderNumber,
-              total: createdOrder.total,
-            })
-          );
-        }
-
-        // Initialize Stripe Checkout session with customer email verification
-        const sessionData = await createCheckoutSession(createdOrder._id, form.email);
-
-        // Redirect browser to Stripe-hosted Checkout
-        window.location.href = sessionData.sessionUrl;
-        return;
-      }
-
-      // COD Flow
-      saveCart([]);
-      setCartItems([]);
-      setOrderSuccess(createdOrder);
-    } catch (error) {
-      console.error('Order creation failed:', error);
-
-      setErrors({
-        submit:
-          error.message ||
-          'Something went wrong while placing your order. Please try again.',
+      setNoticeModal({
+        isOpen: true,
+        type: 'prepared',
+        url,
       });
-    } finally {
-      setSubmitting(false);
+    } else {
+      setNoticeModal({
+        isOpen: true,
+        type: 'missing',
+        url: '',
+      });
     }
   };
-
-  if (orderSuccess) {
-    return (
-      <Layout>
-        <section className="mx-auto flex min-h-[70vh] w-full max-w-4xl items-center px-4 py-16 sm:px-6 lg:px-8">
-          <div className="w-full rounded-[32px] border border-[#e3d9c4] bg-white p-8 text-center shadow-sm sm:p-12">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#123F34] text-3xl text-[#C6A15B]">
-              ✓
-            </div>
-
-            <p className="mt-6 text-sm uppercase tracking-[0.35em] text-[#C6A15B]">
-              Order confirmed
-            </p>
-
-            <h1 className="mt-3 font-serif text-4xl text-[#0D3B2E]">
-              Thank you for your order
-            </h1>
-
-            <p className="mx-auto mt-4 max-w-2xl text-[#5b5b5b]">
-              Your order has been successfully placed. We have
-              received your order details and will begin processing
-              it shortly.
-            </p>
-
-            <div className="mx-auto mt-8 max-w-md rounded-[24px] bg-[#F8F4EC] p-6 text-left">
-              <div className="flex justify-between gap-4 border-b border-[#e3d9c4] pb-4">
-                <span className="text-sm text-[#5b5b5b]">
-                  Order number
-                </span>
-
-                <span className="font-semibold text-[#0D3B2E]">
-                  {orderSuccess.orderNumber}
-                </span>
-              </div>
-
-              <div className="flex justify-between gap-4 border-b border-[#e3d9c4] py-4">
-                <span className="text-sm text-[#5b5b5b]">
-                  Status
-                </span>
-
-                <span className="font-semibold text-[#0D3B2E]">
-                  {orderSuccess.status}
-                </span>
-              </div>
-
-              <div className="flex justify-between gap-4 pt-4">
-                <span className="text-sm text-[#5b5b5b]">
-                  Total
-                </span>
-
-                <span className="font-semibold text-[#0D3B2E]">
-                  AED {orderSuccess.total}
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link
-                to="/shop"
-                className="rounded-full bg-[#0D3B2E] px-6 py-3 font-semibold text-white"
-              >
-                Continue shopping
-              </Link>
-
-              <Link
-                to="/orders"
-                className="rounded-full border border-[#0D3B2E] px-6 py-3 font-semibold text-[#0D3B2E]"
-              >
-                View my orders
-              </Link>
-            </div>
-          </div>
-        </section>
-      </Layout>
-    );
-  }
 
   return (
     <Layout>
@@ -366,7 +217,7 @@ export const CheckoutPage = () => {
         ) : (
           <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
             <form
-              onSubmit={createOrder}
+              onSubmit={handleWhatsAppCheckout}
               className="space-y-6 rounded-[28px] border border-[#e3d9c4] bg-white p-6 shadow-sm"
             >
               {/* Customer Information */}
@@ -580,68 +431,29 @@ export const CheckoutPage = () => {
                 </div>
               </div>
 
-              {/* Payment Method */}
-              <div>
-                <h2 className="text-xl font-semibold text-[#0D3B2E]">
-                  Payment method
-                </h2>
+              {/* Order via WhatsApp Button */}
+              <div className="flex flex-col gap-3 pt-2">
+                <button
+                  type="submit"
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-[#C6A15B] px-6 py-4 font-semibold text-[#0D3B2E] transition hover:bg-[#d4b570] shadow-md active:scale-98"
+                >
+                  <MessageCircle size={20} className="text-[#0D3B2E]" />
+                  Order on WhatsApp
+                </button>
 
-                <div className="mt-4 space-y-3">
-                  {paymentMethods.map((method) => (
-                    <label
-                      key={method.id}
-                      className={`flex cursor-pointer items-center justify-between rounded-[20px] border p-4 ${
-                        form.paymentMethod === method.id
-                          ? 'border-[#C6A15B] bg-[#F8F4EC]'
-                          : 'border-[#e3d9c4] bg-white'
-                      }`}
-                    >
-                      <div>
-                        <p className="font-semibold text-[#0D3B2E]">
-                          {method.label}
-                        </p>
+                <div className="rounded-[16px] border border-[#e3d9c4] bg-[#F8F4EC] p-3.5 text-center text-xs leading-5 text-[#0D3B2E]">
+                  <strong>Note:</strong> Your order is not confirmed until Oud Kraft replies on WhatsApp. The business will confirm availability, delivery details and Cash on Delivery manually.
+                </div>
 
-                        <p className="mt-1 text-sm text-[#5b5b5b]">
-                          {method.description}
-                        </p>
-                      </div>
-
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        checked={
-                          form.paymentMethod === method.id
-                        }
-                        onChange={() =>
-                          updateForm(
-                            'paymentMethod',
-                            method.id
-                          )
-                        }
-                      />
-                    </label>
-                  ))}
+                <div className="mt-2 text-center">
+                  <Link
+                    to="/cart"
+                    className="inline-flex items-center text-sm font-medium text-[#5b5b5b] transition hover:text-[#0D3B2E]"
+                  >
+                    ← Return to Shopping Bag
+                  </Link>
                 </div>
               </div>
-
-              {/* Place Order / Pay with Card */}
-              <button
-                type="submit"
-                disabled={submitting}
-                className={`rounded-full px-6 py-3 font-semibold text-white transition-colors ${
-                  submitting
-                    ? 'cursor-not-allowed bg-[#6d8079]'
-                    : 'bg-[#0D3B2E] hover:bg-[#123F34]'
-                }`}
-              >
-                {submitting
-                  ? normalizePaymentMethod(form.paymentMethod) === 'card'
-                    ? 'Connecting to secure payment...'
-                    : 'Placing order...'
-                  : normalizePaymentMethod(form.paymentMethod) === 'card'
-                    ? 'Pay with Card'
-                    : 'Place Order'}
-              </button>
             </form>
 
             {/* Order Summary */}
@@ -698,6 +510,13 @@ export const CheckoutPage = () => {
           </div>
         )}
       </section>
+
+      <WhatsAppOrderNoticeModal
+        isOpen={noticeModal.isOpen}
+        onClose={() => setNoticeModal((m) => ({ ...m, isOpen: false }))}
+        type={noticeModal.type}
+        whatsAppUrl={noticeModal.url}
+      />
     </Layout>
   );
 };

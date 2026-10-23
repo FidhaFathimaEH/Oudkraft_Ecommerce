@@ -54,7 +54,7 @@ test('Customer Order Isolation and Authorization Verification', async (t) => {
     isActive: true,
   });
 
-  const adminUser = await User.create({
+  await User.create({
     name: 'Head of Operations',
     email: 'admin.orders@oudkraft.ae',
     phone: '+971503334455',
@@ -103,7 +103,7 @@ test('Customer Order Isolation and Authorization Verification', async (t) => {
     status: 'Confirmed',
   });
 
-  const orderA2 = await Order.create({
+  await Order.create({
     orderNumber: 'OK-A2-1002',
     user: customerA._id,
     customer: {

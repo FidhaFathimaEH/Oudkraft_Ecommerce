@@ -1,7 +1,8 @@
 export const businessConfig = {
   brandName: 'OUD KRAFT',
-  phone: '+971 50 123 4567',
-  whatsapp: '+971501234567',
+  phone: '+971 50 983 4317',
+  whatsapp:
+    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_WHATSAPP_NUMBER) || '971509834317',
   email: 'hello@oudkraft.ae',
   instagram: '@oud_kraft',
   currency: 'AED',

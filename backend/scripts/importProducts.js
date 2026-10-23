@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
-const mongoose = require('mongoose');
 
 const Product = require('../src/models/Product');
 const { connectDB, disconnectDB } = require('../src/config/database');

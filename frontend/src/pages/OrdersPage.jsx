@@ -3,15 +3,11 @@ import { Link } from 'react-router-dom';
 import {
   ShoppingBag,
   Package,
-  Calendar,
-  Clock,
   ArrowRight,
   Loader2,
   AlertCircle,
-  CheckCircle2,
   RefreshCw,
   MapPin,
-  ExternalLink,
 } from 'lucide-react';
 import { Layout } from '../components/Layout';
 import { getMyOrders } from '../services/orders';

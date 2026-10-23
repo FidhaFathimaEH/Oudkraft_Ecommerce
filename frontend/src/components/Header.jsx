@@ -249,20 +249,20 @@ export const Header = () => {
   // Search filter
   const searchResults = searchQuery.trim()
     ? products
-        .filter((product) => {
-          const name = product.name || '';
-          const category = product.category || '';
-          const family = product.fragranceFamily || '';
-          const topNotes = Array.isArray(product.topNotes)
-            ? product.topNotes.join(' ')
-            : '';
-          const middleNotes = Array.isArray(product.middleNotes)
-            ? product.middleNotes.join(' ')
-            : '';
-          const text = `${name} ${category} ${family} ${topNotes} ${middleNotes}`.toLowerCase();
-          return text.includes(searchQuery.toLowerCase());
-        })
-        .slice(0, 5)
+      .filter((product) => {
+        const name = product.name || '';
+        const category = product.category || '';
+        const family = product.fragranceFamily || '';
+        const topNotes = Array.isArray(product.topNotes)
+          ? product.topNotes.join(' ')
+          : '';
+        const middleNotes = Array.isArray(product.middleNotes)
+          ? product.middleNotes.join(' ')
+          : '';
+        const text = `${name} ${category} ${family} ${topNotes} ${middleNotes}`.toLowerCase();
+        return text.includes(searchQuery.toLowerCase());
+      })
+      .slice(0, 5)
     : [];
 
   const handleProductSelect = (slug) => {
@@ -296,304 +296,301 @@ export const Header = () => {
     <>
       <header
         ref={headerRef}
-      className="sticky top-0 z-40 border-b border-[#e8ded0]/80 bg-[#f8f3ea]/95 backdrop-blur-md transition-shadow"
-    >
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* LEFT: Logo & Brand Link */}
-        <div className="flex shrink-0 items-center">
-          <Link
-            to="/"
-            className="group flex items-center gap-2.5 sm:gap-3 transition-opacity hover:opacity-90"
-            aria-label="Oud Kraft Homepage"
-          >
-            <img
-              src={oudKraftLogo}
-              alt="Oud Kraft"
-              className="h-9 w-9 sm:h-10 sm:w-10 object-contain transition-transform duration-300 group-hover:scale-105"
-            />
-            <div className="flex flex-col">
-              <span className="font-serif text-lg sm:text-xl font-semibold tracking-[0.12em] sm:tracking-[0.14em] text-[#0D3B2E] whitespace-nowrap transition-colors group-hover:text-[#C6A15B]">
-                {businessConfig.brandName}
-              </span>
-              <span className="text-[8px] sm:text-[9px] font-medium uppercase tracking-[0.28em] sm:tracking-[0.32em] text-[#787165]">
-                ABU DHABI
-              </span>
-            </div>
-          </Link>
-        </div>
-
-        {/* CENTER: Navigation Links (Desktop) */}
-        <nav
-          className="hidden items-center gap-1 lg:flex"
-          aria-label="Main Navigation"
-        >
-          {navigationLinks.map((nav) => {
-            const isOpen = activeDropdown === nav.id;
-            return (
-              <div
-                key={nav.id}
-                className="relative"
-                onMouseEnter={() => handleMouseEnter(nav.id)}
-                onMouseLeave={handleMouseLeave}
-              >
-                <button
-                  type="button"
-                  onClick={() => handleNavClick(nav.id)}
-                  aria-expanded={isOpen}
-                  className={`inline-flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium uppercase tracking-[0.16em] transition-colors ${
-                    isOpen
-                      ? 'text-[#0D3B2E]'
-                      : 'text-[#4A453E] hover:text-[#0D3B2E]'
-                  }`}
-                >
-                  <span>{nav.label}</span>
-                  <ChevronDown
-                    size={13}
-                    className={`text-[#A09382] transition-transform duration-200 ${
-                      isOpen ? 'rotate-180 text-[#C6A15B]' : ''
-                    }`}
-                  />
-                </button>
-
-                {/* Dropdown Menu */}
-                <AnimatePresence>
-                  {isOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 6, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 4, scale: 0.98 }}
-                      transition={{ duration: 0.16, ease: 'easeOut' }}
-                      className={`absolute top-full z-50 pt-2 ${getDropdownAlignment(nav.id)}`}
-                    >
-                      <div
-                        className="w-80 overflow-hidden rounded-2xl border border-[#ded0b9] bg-[#FAF6EE] p-2 shadow-[0_20px_50px_-12px_rgba(13,59,46,0.28)]"
-                        style={{ minWidth: nav.items.length > 4 ? '340px' : '300px' }}
-                      >
-                        <div className="px-3.5 pb-2 pt-2.5">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#C6A15B]">
-                            {nav.label}
-                          </p>
-                        </div>
-                        <div className="space-y-0.5">
-                          {nav.items.map((item) => (
-                            <Link
-                              key={item.label}
-                              to={item.to}
-                              onClick={() => setActiveDropdown(null)}
-                              className="group flex flex-col rounded-xl px-3.5 py-2.5 transition-colors duration-150 hover:bg-[#EFE7D8]"
-                            >
-                              <span className="flex items-center justify-between text-sm font-medium text-[#1E1B18] transition-colors group-hover:text-[#0D3B2E]">
-                                <span>{item.label}</span>
-                                <ArrowRight
-                                  size={13}
-                                  className="text-[#C6A15B] opacity-0 transition-opacity duration-150 group-hover:opacity-100"
-                                />
-                              </span>
-                              {item.description && (
-                                <span className="mt-0.5 text-xs text-[#6B6356] transition-colors group-hover:text-[#4A4338]">
-                                  {item.description}
-                                </span>
-                              )}
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+        className="sticky top-0 z-40 border-b border-[#e8ded0]/80 bg-[#f8f3ea]/95 backdrop-blur-md transition-shadow"
+      >
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          {/* LEFT: Logo & Brand Link */}
+          <div className="flex shrink-0 items-center">
+            <Link
+              to="/"
+              className="group flex items-center gap-2.5 sm:gap-3 transition-opacity hover:opacity-90"
+              aria-label="Oud Kraft Homepage"
+            >
+              <img
+                src={oudKraftLogo}
+                alt="Oud Kraft"
+                className="h-9 w-9 sm:h-10 sm:w-10 object-contain transition-transform duration-300 group-hover:scale-105"
+              />
+              <div className="flex flex-col">
+                <span className="font-serif text-lg sm:text-xl font-semibold tracking-[0.12em] sm:tracking-[0.14em] text-[#0D3B2E] whitespace-nowrap transition-colors group-hover:text-[#C6A15B]">
+                  {businessConfig.brandName}
+                </span>
+                <span className="text-[8px] sm:text-[9px] font-medium uppercase tracking-[0.28em] sm:tracking-[0.32em] text-[#787165]">
+                  ABU DHABI
+                </span>
               </div>
-            );
-          })}
-        </nav>
+            </Link>
+          </div>
 
-        {/* RIGHT: Search, Account, Wishlist, Cart, Mobile Toggle */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Search Trigger */}
-          <button
-            type="button"
-            onClick={() => setSearchOpen((prev) => !prev)}
-            aria-label="Search Fragrances"
-            className={`flex h-10 w-10 items-center justify-center rounded-full text-[#0D3B2E] transition-colors hover:bg-[#ede3d2]/70 ${
-              searchOpen ? 'bg-[#ede3d2] text-[#C6A15B]' : ''
-            }`}
+          {/* CENTER: Navigation Links (Desktop) */}
+          <nav
+            className="hidden items-center gap-1 lg:flex"
+            aria-label="Main Navigation"
           >
-            {searchOpen ? <X size={19} /> : <Search size={19} />}
-          </button>
-
-          {/* Account (hidden on mobile, accessible in drawer) */}
-          <Link
-            to="/account"
-            aria-label="My Account"
-            className="hidden sm:flex h-10 w-10 items-center justify-center rounded-full text-[#0D3B2E] transition-colors hover:bg-[#ede3d2]/70"
-          >
-            <UserRound size={19} />
-          </Link>
-
-          {/* Wishlist (hidden on mobile, accessible in drawer) */}
-          <Link
-            to="/wishlist"
-            aria-label={`Wishlist with ${wishlistCount} items`}
-            className="relative hidden sm:flex h-10 w-10 items-center justify-center rounded-full text-[#0D3B2E] transition-colors hover:bg-[#ede3d2]/70"
-          >
-            <Heart size={19} />
-            {wishlistCount > 0 && (
-              <span className="absolute right-1 top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#C6A15B] px-1 text-[10px] font-semibold text-white shadow-sm">
-                {wishlistCount}
-              </span>
-            )}
-          </Link>
-
-          {/* Cart */}
-          <Link
-            to="/cart"
-            aria-label={`Shopping cart with ${cartCount} items`}
-            className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#0D3B2E] transition-colors hover:bg-[#ede3d2]/70"
-          >
-            <ShoppingBag size={19} />
-            {cartCount > 0 && (
-              <span className="absolute right-1 top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#0D3B2E] px-1 text-[10px] font-semibold text-white shadow-sm">
-                {cartCount}
-              </span>
-            )}
-          </Link>
-
-          {/* Mobile Menu Button */}
-          <button
-            type="button"
-            onClick={() => setMobileOpen((prev) => !prev)}
-            aria-label={mobileOpen ? 'Close Menu' : 'Open Menu'}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[#0D3B2E] transition-colors hover:bg-[#ede3d2]/70 lg:hidden"
-          >
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </div>
-      </div>
-
-      {/* SEARCH BAR PANEL (DESKTOP & MOBILE) */}
-      <AnimatePresence>
-        {searchOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden border-t border-[#e5dac6] bg-[#FAF5EC]/98 backdrop-blur-md"
-          >
-            <div className="mx-auto max-w-4xl px-4 py-4 sm:px-6">
-              <div className="relative flex items-center">
-                <Search
-                  size={18}
-                  className="absolute left-4 text-[#C6A15B]"
-                />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={handleSearchKeyDown}
-                  placeholder="Search by perfume name, note, or category..."
-                  className="w-full rounded-full border border-[#ded0b9] bg-white/90 py-3.5 pl-11 pr-12 text-sm text-[#1A1A1A] placeholder-[#8A8173] outline-none transition-all focus:border-[#C6A15B] focus:ring-1 focus:ring-[#C6A15B]"
-                />
-                {searchQuery && (
+            {navigationLinks.map((nav) => {
+              const isOpen = activeDropdown === nav.id;
+              return (
+                <div
+                  key={nav.id}
+                  className="relative"
+                  onMouseEnter={() => handleMouseEnter(nav.id)}
+                  onMouseLeave={handleMouseLeave}
+                >
                   <button
                     type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-4 text-[#8A8173] hover:text-[#1A1A1A]"
+                    onClick={() => handleNavClick(nav.id)}
+                    aria-expanded={isOpen}
+                    className={`inline-flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium uppercase tracking-[0.16em] transition-colors ${isOpen
+                        ? 'text-[#0D3B2E]'
+                        : 'text-[#4A453E] hover:text-[#0D3B2E]'
+                      }`}
                   >
-                    <X size={16} />
+                    <span>{nav.label}</span>
+                    <ChevronDown
+                      size={13}
+                      className={`text-[#A09382] transition-transform duration-200 ${isOpen ? 'rotate-180 text-[#C6A15B]' : ''
+                        }`}
+                    />
                   </button>
-                )}
-              </div>
 
-              {/* Live Search Results */}
-              {searchQuery.trim() && (
-                <div className="mt-3 divide-y divide-[#ece2d0] rounded-2xl border border-[#ded0b9] bg-white p-2 shadow-lg">
-                  {searchResults.length > 0 ? (
-                    searchResults.map((product) => (
-                      <button
-                        key={product._id || product.id || product.slug}
-                        type="button"
-                        onClick={() => handleProductSelect(product.slug)}
-                        className="flex w-full items-center justify-between p-3 text-left transition-colors hover:bg-[#F9F4EB]"
+                  {/* Dropdown Menu */}
+                  <AnimatePresence>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                        transition={{ duration: 0.16, ease: 'easeOut' }}
+                        className={`absolute top-full z-50 pt-2 ${getDropdownAlignment(nav.id)}`}
                       >
-                        <div className="flex items-center gap-3">
-                          {product.images && product.images[0] ? (
-                            <img
-                              src={product.images[0]}
-                              alt={product.name}
-                              className="h-12 w-12 rounded-lg object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#EFE8DA] text-xs font-serif text-[#0D3B2E]">
-                              Oud
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-serif text-base font-medium text-[#0D3B2E]">
-                              {product.name}
-                            </p>
-                            <p className="text-xs text-[#7A7265]">
-                              {product.category || 'Fine Fragrance'}
-                              {product.fragranceFamily ? ` • ${product.fragranceFamily}` : ''}
+                        <div
+                          className="w-80 overflow-hidden rounded-2xl border border-[#ded0b9] bg-[#FAF6EE] p-2 shadow-[0_20px_50px_-12px_rgba(13,59,46,0.28)]"
+                          style={{ minWidth: nav.items.length > 4 ? '340px' : '300px' }}
+                        >
+                          <div className="px-3.5 pb-2 pt-2.5">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#C6A15B]">
+                              {nav.label}
                             </p>
                           </div>
+                          <div className="space-y-0.5">
+                            {nav.items.map((item) => (
+                              <Link
+                                key={item.label}
+                                to={item.to}
+                                onClick={() => setActiveDropdown(null)}
+                                className="group flex flex-col rounded-xl px-3.5 py-2.5 transition-colors duration-150 hover:bg-[#EFE7D8]"
+                              >
+                                <span className="flex items-center justify-between text-sm font-medium text-[#1E1B18] transition-colors group-hover:text-[#0D3B2E]">
+                                  <span>{item.label}</span>
+                                  <ArrowRight
+                                    size={13}
+                                    className="text-[#C6A15B] opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+                                  />
+                                </span>
+                                {item.description && (
+                                  <span className="mt-0.5 text-xs text-[#6B6356] transition-colors group-hover:text-[#4A4338]">
+                                    {item.description}
+                                  </span>
+                                )}
+                              </Link>
+                            ))}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          {product.price && (
-                            <span className="text-sm font-semibold text-[#1A1A1A]">
-                              AED {product.price}
-                            </span>
-                          )}
-                          <ChevronRight
-                            size={16}
-                            className="text-[#C6A15B]"
-                          />
-                        </div>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="p-6 text-center text-sm text-[#7A7265]">
-                      No fragrances found matching &quot;{searchQuery}&quot;. Try exploring our{' '}
-                      <Link
-                        to="/shop"
-                        onClick={() => setSearchOpen(false)}
-                        className="font-medium text-[#0D3B2E] underline"
-                      >
-                        full shop
-                      </Link>
-                      .
-                    </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
+          </nav>
+
+          {/* RIGHT: Search, Account, Wishlist, Cart, Mobile Toggle */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Search Trigger */}
+            <button
+              type="button"
+              onClick={() => setSearchOpen((prev) => !prev)}
+              aria-label="Search Fragrances"
+              className={`flex h-10 w-10 items-center justify-center rounded-full text-[#0D3B2E] transition-colors hover:bg-[#ede3d2]/70 ${searchOpen ? 'bg-[#ede3d2] text-[#C6A15B]' : ''
+                }`}
+            >
+              {searchOpen ? <X size={19} /> : <Search size={19} />}
+            </button>
+
+            {/* Account (hidden on mobile, accessible in drawer) */}
+            <Link
+              to="/account"
+              aria-label="My Account"
+              className="hidden sm:flex h-10 w-10 items-center justify-center rounded-full text-[#0D3B2E] transition-colors hover:bg-[#ede3d2]/70"
+            >
+              <UserRound size={19} />
+            </Link>
+
+            {/* Wishlist (hidden on mobile, accessible in drawer) */}
+            <Link
+              to="/wishlist"
+              aria-label={`Wishlist with ${wishlistCount} items`}
+              className="relative hidden sm:flex h-10 w-10 items-center justify-center rounded-full text-[#0D3B2E] transition-colors hover:bg-[#ede3d2]/70"
+            >
+              <Heart size={19} />
+              {wishlistCount > 0 && (
+                <span className="absolute right-1 top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#C6A15B] px-1 text-[10px] font-semibold text-white shadow-sm">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
+
+            {/* Cart */}
+            <Link
+              to="/cart"
+              aria-label={`Shopping cart with ${cartCount} items`}
+              className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#0D3B2E] transition-colors hover:bg-[#ede3d2]/70"
+            >
+              <ShoppingBag size={19} />
+              {cartCount > 0 && (
+                <span className="absolute right-1 top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#0D3B2E] px-1 text-[10px] font-semibold text-white shadow-sm">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+
+            {/* Mobile Menu Button */}
+            <button
+              type="button"
+              onClick={() => setMobileOpen((prev) => !prev)}
+              aria-label={mobileOpen ? 'Close Menu' : 'Open Menu'}
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[#0D3B2E] transition-colors hover:bg-[#ede3d2]/70 lg:hidden"
+            >
+              {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
+        </div>
+
+        {/* SEARCH BAR PANEL (DESKTOP & MOBILE) */}
+        <AnimatePresence>
+          {searchOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden border-t border-[#e5dac6] bg-[#FAF5EC]/98 backdrop-blur-md"
+            >
+              <div className="mx-auto max-w-4xl px-4 py-4 sm:px-6">
+                <div className="relative flex items-center">
+                  <Search
+                    size={18}
+                    className="absolute left-4 text-[#C6A15B]"
+                  />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleSearchKeyDown}
+                    placeholder="Search by perfume name, note, or category..."
+                    className="w-full rounded-full border border-[#ded0b9] bg-white/90 py-3.5 pl-11 pr-12 text-sm text-[#1A1A1A] placeholder-[#8A8173] outline-none transition-all focus:border-[#C6A15B] focus:ring-1 focus:ring-[#C6A15B]"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-4 text-[#8A8173] hover:text-[#1A1A1A]"
+                    >
+                      <X size={16} />
+                    </button>
                   )}
                 </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </header>
 
-    {/* MOBILE DRAWER */}
-    <AnimatePresence>
-      {mobileOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={() => setMobileOpen(false)}
-            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
-          />
+                {/* Live Search Results */}
+                {searchQuery.trim() && (
+                  <div className="mt-3 divide-y divide-[#ece2d0] rounded-2xl border border-[#ded0b9] bg-white p-2 shadow-lg">
+                    {searchResults.length > 0 ? (
+                      searchResults.map((product) => (
+                        <button
+                          key={product._id || product.id || product.slug}
+                          type="button"
+                          onClick={() => handleProductSelect(product.slug)}
+                          className="flex w-full items-center justify-between p-3 text-left transition-colors hover:bg-[#F9F4EB]"
+                        >
+                          <div className="flex items-center gap-3">
+                            {product.images && product.images[0] ? (
+                              <img
+                                src={product.images[0]}
+                                alt={product.name}
+                                className="h-12 w-12 rounded-lg object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#EFE8DA] text-xs font-serif text-[#0D3B2E]">
+                                Oud
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-serif text-base font-medium text-[#0D3B2E]">
+                                {product.name}
+                              </p>
+                              <p className="text-xs text-[#7A7265]">
+                                {product.category || 'Fine Fragrance'}
+                                {product.fragranceFamily ? ` • ${product.fragranceFamily}` : ''}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            {product.price && (
+                              <span className="text-sm font-semibold text-[#1A1A1A]">
+                                AED {product.price}
+                              </span>
+                            )}
+                            <ChevronRight
+                              size={16}
+                              className="text-[#C6A15B]"
+                            />
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="p-6 text-center text-sm text-[#7A7265]">
+                        No fragrances found matching &quot;{searchQuery}&quot;. Try exploring our{' '}
+                        <Link
+                          to="/shop"
+                          onClick={() => setSearchOpen(false)}
+                          className="font-medium text-[#0D3B2E] underline"
+                        >
+                          full shop
+                        </Link>
+                        .
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </header>
 
-          {/* Off-canvas Drawer */}
-          <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'tween', duration: 0.28, ease: 'easeOut' }}
-            className="fixed inset-y-0 right-0 z-50 flex h-full max-h-screen w-full max-w-sm flex-col border-l border-[#e4d8c2] bg-[#FAF5EB] shadow-2xl lg:hidden"
-          >
+      {/* MOBILE DRAWER */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setMobileOpen(false)}
+              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+            />
+
+            {/* Off-canvas Drawer */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'tween', duration: 0.28, ease: 'easeOut' }}
+              className="fixed inset-y-0 right-0 z-50 flex h-full max-h-screen w-full max-w-sm flex-col border-l border-[#e4d8c2] bg-[#FAF5EB] shadow-2xl lg:hidden"
+            >
               {/* Drawer Header */}
               <div className="flex h-20 items-center justify-between border-b border-[#e4d8c2] px-4 sm:px-6">
                 <Link
@@ -645,9 +642,8 @@ export const Header = () => {
                           </span>
                           <ChevronDown
                             size={17}
-                            className={`text-[#C6A15B] transition-transform duration-200 ${
-                              isExpanded ? 'rotate-180' : ''
-                            }`}
+                            className={`text-[#C6A15B] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''
+                              }`}
                           />
                         </button>
 

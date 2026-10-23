@@ -64,5 +64,52 @@ export const getAdminOrderById = (id) => req(`/orders/${id}`);
 export const updateOrderStatus = (id, status) =>
   req(`/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
 
+export const recordConfirmedWhatsAppOrder = (orderData) =>
+  req('/orders/admin-record', { method: 'POST', body: JSON.stringify(orderData) });
+
+export const downloadOrderInvoice = async (orderId, fallbackInvoiceNumber = '') => {
+  const baseUrl = getApiBaseUrl();
+  const token = getAuthToken();
+  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
+  const res = await fetch(`${baseUrl}/orders/${orderId}/invoice`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: { ...authHeaders },
+  });
+
+  if (!res.ok) {
+    let errMessage = 'Failed to generate PDF invoice.';
+    try {
+      const errJson = await res.json();
+      errMessage = errJson.message || errMessage;
+    } catch {
+      // Ignore if not json
+    }
+    throw new Error(errMessage);
+  }
+
+  let filename = `Oud-Kraft-Invoice-${fallbackInvoiceNumber || orderId}.pdf`;
+  const disposition = res.headers.get('content-disposition');
+  if (disposition && disposition.includes('filename=')) {
+    const match = disposition.match(/filename="?([^";]+)"?/);
+    if (match && match[1]) {
+      filename = match[1];
+    }
+  }
+
+  const blob = await res.blob();
+  const downloadUrl = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = downloadUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(downloadUrl);
+
+  return { success: true, filename };
+};
+
 // Customers
 export const getCustomers = () => req('/admin/customers');

@@ -401,8 +401,180 @@ const updateOrderStatus = async (req, res, next) => {
   }
 };
 
+const { generateInvoicePdf, getOrGenerateInvoiceNumber } = require('../services/invoiceService');
+
+const downloadOrderInvoice = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid order ID.',
+      });
+    }
+
+    const order = await Order.findById(id).populate('items.product');
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found.',
+      });
+    }
+
+    if (order.status === 'Cancelled') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot generate an invoice for a cancelled order.',
+      });
+    }
+
+    // Persist invoice number and issue date on the order document for stability
+    const invoiceNumber = getOrGenerateInvoiceNumber(order);
+    if (!order.invoiceNumber) {
+      order.invoiceNumber = invoiceNumber;
+      order.invoiceIssuedAt = order.invoiceIssuedAt || new Date();
+      await order.save();
+    }
+
+    const { buffer } = await generateInvoicePdf(order);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="Oud-Kraft-Invoice-${invoiceNumber}.pdf"`
+    );
+    res.setHeader('Content-Length', buffer.length);
+    res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+
+    return res.end(buffer);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const createConfirmedWhatsAppOrder = async (req, res, next) => {
+  try {
+    const {
+      customer,
+      deliveryAddress,
+      items,
+      deliveryFee,
+      discount = 0,
+      notes,
+    } = req.body;
+
+    if (!customer || !customer.name || !customer.phone) {
+      return res.status(400).json({
+        success: false,
+        message: 'Customer name and contact phone number are required.',
+      });
+    }
+
+    if (!deliveryAddress || !deliveryAddress.emirate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Delivery emirate is required.',
+      });
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one order item is required.',
+      });
+    }
+
+    let calculatedSubtotal = 0;
+    const resolvedItems = [];
+
+    for (const item of items) {
+      const quantity = Math.max(1, parseInt(item.quantity, 10) || 1);
+      const price = Number(item.price);
+
+      if (isNaN(price) || price <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid price for item "${item.name || 'Unknown'}".`,
+        });
+      }
+
+      const itemSubtotal = round2(price * quantity);
+      calculatedSubtotal += itemSubtotal;
+
+      resolvedItems.push({
+        product: mongoose.Types.ObjectId.isValid(item.product)
+          ? item.product
+          : new mongoose.Types.ObjectId(),
+        name: String(item.name || 'Luxury Fragrance').trim(),
+        slug: item.slug || '',
+        image: item.image || '',
+        size: item.size || '100 ml',
+        quantity,
+        price,
+        subtotal: itemSubtotal,
+      });
+    }
+
+    calculatedSubtotal = round2(calculatedSubtotal);
+
+    const fee = deliveryFee !== undefined && !isNaN(Number(deliveryFee))
+      ? round2(Number(deliveryFee))
+      : calculateDeliveryFee(calculatedSubtotal, deliveryAddress.emirate);
+
+    const disc = Math.max(0, round2(Number(discount) || 0));
+    const calculatedTotal = round2(Math.max(0, calculatedSubtotal + fee - disc));
+
+    const orderNumber = generateOrderNumber();
+
+    const fallbackEmail = `${String(customer.phone).replace(/\D/g, '') || 'client'}@whatsapp.oudkraft.ae`;
+
+    const newOrder = await Order.create({
+      orderNumber,
+      customer: {
+        name: String(customer.name).trim(),
+        email: customer.email && String(customer.email).trim()
+          ? String(customer.email).trim().toLowerCase()
+          : fallbackEmail,
+        phone: String(customer.phone).trim(),
+      },
+      deliveryAddress: {
+        emirate: String(deliveryAddress.emirate).trim(),
+        area: String(deliveryAddress.area || '').trim(),
+        street: String(deliveryAddress.street || '').trim(),
+        building: String(deliveryAddress.building || '').trim(),
+        apartment: String(deliveryAddress.apartment || '').trim(),
+        landmark: String(deliveryAddress.landmark || '').trim(),
+        instructions: notes
+          ? `${deliveryAddress.instructions || ''} [Notes: ${notes}]`.trim()
+          : String(deliveryAddress.instructions || '').trim(),
+      },
+      items: resolvedItems,
+      subtotal: calculatedSubtotal,
+      deliveryFee: fee,
+      discount: disc,
+      total: calculatedTotal,
+      paymentMethod: 'cash_on_delivery',
+      paymentStatus: 'pending',
+      currency: 'aed',
+      status: 'Confirmed',
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Confirmed WhatsApp order recorded successfully.',
+      data: newOrder,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createOrder,
+  createConfirmedWhatsAppOrder,
+  downloadOrderInvoice,
   getMyOrders,
   getOrders,
   getOrderById,

@@ -1,11 +1,15 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { MessageCircle, ArrowRight } from 'lucide-react';
-import { businessConfig } from '../config/businessConfig';
+import { getCleanWhatsAppNumber } from '../utils/whatsappOrder';
 import oudKraftLogo from '../assets/logo/oud-kraft-logo.png';
 import { Header } from './Header';
 
 export const Layout = ({ children }) => {
+  const cleanWhatsAppNumber = getCleanWhatsAppNumber();
+  const isWhatsAppLive = Boolean(cleanWhatsAppNumber);
+  const whatsappUrl = isWhatsAppLive ? `https://wa.me/${cleanWhatsAppNumber}` : '/contact';
+
   return (
     <div className="min-h-screen bg-transparent text-[#171311]">
       <div className="bg-[#123F34] px-4 py-2 text-center text-sm text-[#f7ebda]">
@@ -18,11 +22,17 @@ export const Layout = ({ children }) => {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[#C6A15B]">Luxury concierge</p>
-              <p className="mt-2 text-sm text-[#5b5b5b]">Ask us for perfume recommendations, gifting guidance or order updates via WhatsApp.</p>
+              <p className="mt-2 text-sm text-[#5b5b5b]">Ask us for perfume recommendations, gifting guidance or order updates.</p>
             </div>
-            <a href={`https://wa.me/${businessConfig.whatsapp}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-[#17362c] px-4 py-3 text-sm font-semibold text-white">
-              Contact concierge <ArrowRight size={15} />
-            </a>
+            {isWhatsAppLive ? (
+              <a href={whatsappUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-[#17362c] px-4 py-3 text-sm font-semibold text-white">
+                Contact concierge <ArrowRight size={15} />
+              </a>
+            ) : (
+              <Link to="/contact" className="inline-flex items-center gap-2 rounded-full bg-[#17362c] px-4 py-3 text-sm font-semibold text-white">
+                Contact concierge <ArrowRight size={15} />
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -56,7 +66,13 @@ export const Layout = ({ children }) => {
             <h3 className="font-semibold">Follow us</h3>
             <ul className="mt-3 space-y-2 text-sm text-[#ebdfcb]">
               <li><a href="https://instagram.com/oud_kraft" target="_blank" rel="noreferrer">Instagram</a></li>
-              <li><a href={`https://wa.me/${businessConfig.whatsapp}`} target="_blank" rel="noreferrer">WhatsApp</a></li>
+              <li>
+                {isWhatsAppLive ? (
+                  <a href={whatsappUrl} target="_blank" rel="noreferrer">WhatsApp</a>
+                ) : (
+                  <Link to="/contact">Concierge</Link>
+                )}
+              </li>
             </ul>
           </div>
         </div>
@@ -70,17 +86,29 @@ export const Layout = ({ children }) => {
           </div>
         </div>
       </footer>
-      <a
-        href={`https://wa.me/${businessConfig.whatsapp}`}
-        target="_blank"
-        rel="noreferrer"
-        title="Order / Ask on WhatsApp"
-        aria-label="Order or ask on WhatsApp"
-        className="fixed bottom-5 right-5 z-30 flex h-12 w-12 items-center justify-center gap-2 rounded-full bg-[#25D366] text-sm font-semibold text-white shadow-lg transition-transform hover:scale-105 active:scale-95 sm:h-auto sm:w-auto sm:px-4 sm:py-3 sm:justify-start"
-      >
-        <MessageCircle size={18} className="shrink-0" />
-        <span className="hidden sm:inline">Order / Ask on WhatsApp</span>
-      </a>
+      {isWhatsAppLive ? (
+        <a
+          href={whatsappUrl}
+          target="_blank"
+          rel="noreferrer"
+          title="Order / Ask on WhatsApp"
+          aria-label="Order or ask on WhatsApp"
+          className="fixed bottom-5 right-5 z-30 flex h-12 w-12 items-center justify-center gap-2 rounded-full bg-[#25D366] text-sm font-semibold text-white shadow-lg transition-transform hover:scale-105 active:scale-95 sm:h-auto sm:w-auto sm:px-4 sm:py-3 sm:justify-start"
+        >
+          <MessageCircle size={18} className="shrink-0" />
+          <span className="hidden sm:inline">Order / Ask on WhatsApp</span>
+        </a>
+      ) : (
+        <Link
+          to="/contact"
+          title="Contact Boutique Concierge"
+          aria-label="Contact Boutique Concierge"
+          className="fixed bottom-5 right-5 z-30 flex h-12 w-12 items-center justify-center gap-2 rounded-full bg-[#123F34] text-sm font-semibold text-[#C6A15B] shadow-lg transition-transform hover:scale-105 active:scale-95 sm:h-auto sm:w-auto sm:px-4 sm:py-3 sm:justify-start"
+        >
+          <MessageCircle size={18} className="shrink-0" />
+          <span className="hidden sm:inline">Contact Concierge</span>
+        </Link>
+      )}
     </div>
   );
 };

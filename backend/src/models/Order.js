@@ -189,6 +189,16 @@ const orderSchema = new mongoose.Schema(
       type: Date,
     },
 
+    invoiceNumber: {
+      type: String,
+      sparse: true,
+      index: true,
+    },
+
+    invoiceIssuedAt: {
+      type: Date,
+    },
+
     status: {
       type: String,
       enum: [
